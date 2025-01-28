@@ -2,26 +2,26 @@
 module memory(
 	//input
 	input clk_i,
-	input wire [`STORE_WIDTH - 1:0]  F_store_op_i,
-	input wire [`LOAD_WIDTH - 1:0]	 F_load_op_i,
-	input wire [`XLEN - 1:0]         addr_i,
-	input wire [`XLEN - 1:0]		 data_i,
+	input wire [`STORE_WIDTH - 1:0]  ED_store_op_i,
+	input wire [`LOAD_WIDTH - 1:0]	 ED_load_op_i,
+	input wire [`XLEN - 1:0]         ED_valE_i,
+	input wire [`XLEN - 1:0]		 ED_rs2_data_i,
 	//output
-	output wire [`XLEN - 1:0]        data_o
+	output wire [`XLEN - 1:0]        M_valM_o
 );
 	//load OP
-	wire load_lb = F_load_op_i[`load_lb];
-	wire load_lh = F_load_op_i[`load_lh];
-	wire load_lw = F_load_op_i[`load_lw];
-	wire load_ld = F_load_op_i[`load_ld];
-	wire load_lbu = F_load_op_i[`load_lbu];
-	wire load_lhu = F_load_op_i[`load_lhu];
-	wire load_lwu = F_load_op_i[`load_lwu];
+	wire load_lb = ED_load_op_i[`load_lb];
+	wire load_lh = ED_load_op_i[`load_lh];
+	wire load_lw = ED_load_op_i[`load_lw];
+	wire load_ld = ED_load_op_i[`load_ld];
+	wire load_lbu = ED_load_op_i[`load_lbu];
+	wire load_lhu = ED_load_op_i[`load_lhu];
+	wire load_lwu = ED_load_op_i[`load_lwu];
 	//store
-	wire store_sb = F_store_op_i[`store_sb];
-	wire store_sh = F_store_op_i[`store_sh];
-	wire store_sw = F_store_op_i[`store_sw];
-	wire store_sd = F_store_op_i[`store_sd];
+	wire store_sb = ED_store_op_i[`store_sb];
+	wire store_sh = ED_store_op_i[`store_sh];
+	wire store_sw = ED_store_op_i[`store_sw];
+	wire store_sd = ED_store_op_i[`store_sd];
 	
 	//load / store
 	wire op_load = load_lb | load_lh | load_lw | load_ld | load_lbu | load_lhu | load_lwu;
@@ -33,7 +33,7 @@ module memory(
 //读取内存，每次读取4个字节，然后根据需要，再对读出来的数据进行处理
 always @(*) begin
     if(op_load) begin
-	data = dpi_mem_read(addr_i, 4);
+	data = dpi_mem_read(ED_valE_i, 4);
     end
     else begin
 	data = 32'B0;
@@ -43,18 +43,18 @@ end
 //写入
 always @(posedge clk_i) begin
 	if(store_sb) begin
-		dpi_mem_write(addr_i, data_i, 1);
+		dpi_mem_write(ED_valE_i, ED_rs2_data_i, 1);
 	end
 	else if(store_sh) begin
-		dpi_mem_write(addr_i, data_i, 2);	
+		dpi_mem_write(ED_valE_i, ED_rs2_data_i, 2);	
 	end
 	else if(store_sw) begin
-		dpi_mem_write(addr_i, data_i, 4);			
+		dpi_mem_write(ED_valE_i, ED_rs2_data_i, 4);			
 	end
 end
 	
 	//data load
-	assign data_o = load_lb ? {{24{data[7]}},data[7:0]} :
+	assign M_valM_o = load_lb ? {{24{data[7]}},data[7:0]} :
 					 load_lh ? {{16{data[15]}},data[15:0]} :
 					 load_lw ? data :
 					 load_lbu ? {{24{1'b0}},data[7:0]} :

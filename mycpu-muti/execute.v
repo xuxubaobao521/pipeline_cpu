@@ -1,13 +1,13 @@
-`include "define.v"
+`include "deDine.v"
 module execute(
 	//input
 	input wire [`XLEN - 1:0] 		 D_rs1_data_i,
 	input wire [`XLEN - 1:0] 		 D_rs2_data_i,
-	input wire [`OP_WIDTH - 1:0]     F_epcode_i,
-	input wire [`BRANCH_WIDTH - 1:0] F_branch_op_i,
-	input wire [`XLEN - 1:0]         F_imme_i,
-	input wire [`ALU_WIDTH - 1:0]    F_ALU_op_i,
-	input wire [`PC_WIDTH - 1:0]     F_PC_i,
+	input wire [`OP_WIDTH - 1:0]     D_epcode_i,
+	input wire [`BRANCH_WIDTH - 1:0] D_branch_op_i,
+	input wire [`XLEN - 1:0]         D_imme_i,
+	input wire [`ALU_WIDTH - 1:0]    D_ALU_op_i,
+	input wire [`PC_WIDTH - 1:0]     D_PC_i,
 	input wire [`PC_WIDTH - 1:0]     D_nPC_i,
 	//output
 	//结果
@@ -20,49 +20,49 @@ module execute(
 	output wire E_jmp_sel_o
 );
 	//opcode OP
-	wire op_branch = F_epcode_i[`op_branch];
-	wire op_jal = F_epcode_i[`op_jal];
-	wire op_jalr = F_epcode_i[`op_jalr];
-	wire op_store = F_epcode_i[`op_store];
-	wire op_load = F_epcode_i[`op_load];
-	wire op_alur = F_epcode_i[`op_alur];
-	wire op_alurw = F_epcode_i[`op_alurw];
-	wire op_alui = F_epcode_i[`op_alui];
-	wire op_aluiw = F_epcode_i[`op_aluiw];
-	wire op_lui = F_epcode_i[`op_lui];
-	wire op_auipc = F_epcode_i[`op_auipc];
+	wire op_branch = D_epcode_i[`op_branch];
+	wire op_jal = D_epcode_i[`op_jal];
+	wire op_jalr = D_epcode_i[`op_jalr];
+	wire op_store = D_epcode_i[`op_store];
+	wire op_load = D_epcode_i[`op_load];
+	wire op_alur = D_epcode_i[`op_alur];
+	wire op_alurw = D_epcode_i[`op_alurw];
+	wire op_alui = D_epcode_i[`op_alui];
+	wire op_aluiw = D_epcode_i[`op_aluiw];
+	wire op_lui = D_epcode_i[`op_lui];
+	wire op_auipc = D_epcode_i[`op_auipc];
 	//ALU OP
-	wire alu_add = F_ALU_op_i[`alu_add];
-	wire alu_sub = F_ALU_op_i[`alu_sub];
-	wire alu_sll = F_ALU_op_i[`alu_sll];
-	wire alu_slt = F_ALU_op_i[`alu_slt];
-	wire alu_sltu = F_ALU_op_i[`alu_sltu];
-	wire alu_xor = F_ALU_op_i[`alu_xor];
-	wire alu_srl = F_ALU_op_i[`alu_srl];
-	wire alu_sra = F_ALU_op_i[`alu_sra];
-	wire alu_or = F_ALU_op_i[`alu_or];
-	wire alu_and = F_ALU_op_i[`alu_and];
+	wire alu_add = D_ALU_op_i[`alu_add];
+	wire alu_sub = D_ALU_op_i[`alu_sub];
+	wire alu_sll = D_ALU_op_i[`alu_sll];
+	wire alu_slt = D_ALU_op_i[`alu_slt];
+	wire alu_sltu = D_ALU_op_i[`alu_sltu];
+	wire alu_xor = D_ALU_op_i[`alu_xor];
+	wire alu_srl = D_ALU_op_i[`alu_srl];
+	wire alu_sra = D_ALU_op_i[`alu_sra];
+	wire alu_or = D_ALU_op_i[`alu_or];
+	wire alu_and = D_ALU_op_i[`alu_and];
 	//BRANCH OP
-	wire branch_eq = F_branch_op_i[`branch_eq];
-	wire branch_ne = F_branch_op_i[`branch_ne];
-	wire branch_lt = F_branch_op_i[`branch_lt];
-	wire branch_ge = F_branch_op_i[`branch_ge];
-	wire branch_ltu = F_branch_op_i[`branch_ltu];
-	wire branch_geu = F_branch_op_i[`branch_geu];
+	wire branch_eq = D_branch_op_i[`branch_eq];
+	wire branch_ne = D_branch_op_i[`branch_ne];
+	wire branch_lt = D_branch_op_i[`branch_lt];
+	wire branch_ge = D_branch_op_i[`branch_ge];
+	wire branch_ltu = D_branch_op_i[`branch_ltu];
+	wire branch_geu = D_branch_op_i[`branch_geu];
 	//ALU计算
 	//操作数的选择
-	//OP1 : jal/jalr/auipc:F_PC_i
+	//OP1 : jal/jalr/auipc:D_PC_i
 	//		lui:0
 	//		D_rs1_data_i
 	//OP2 : jal/jalr:4
-	//		store/load/lui/auipc/alui/aluiw: F_imme_i
+	//		store/load/lui/auipc/alui/aluiw: D_imme_i
 	//      D_rs2_data_i
 	//ADD/SUB
-	wire [`XLEN - 1:0] OP1 =  	(op_jal | op_jalr | op_auipc) ? F_PC_i :
+	wire [`XLEN - 1:0] OP1 =  	(op_jal | op_jalr | op_auipc) ? D_PC_i :
 								(op_lui) ? 0 : D_rs1_data_i;
 								
 	wire [`XLEN - 1:0] OP2 = 	(op_jal | op_jalr) ? 4 :
-								(op_store | op_load | op_lui | op_alui | op_aluiw | op_auipc) ? F_imme_i : D_rs2_data_i;
+								(op_store | op_load | op_lui | op_alui | op_aluiw | op_auipc) ? D_imme_i : D_rs2_data_i;
 	//ALU sel
 	wire use_sub = alu_sub | alu_slt | alu_sltu | op_branch;
 	wire sel_add = alu_add | op_lui | op_auipc | op_store | op_load | op_jal | op_jalr;
@@ -98,13 +98,13 @@ module execute(
 	assign res_slt = {31'b0, lt};
 	assign res_sltu = {31'b0, ltu};
 	//移位
-	wire [4:0] shift_OP2 = (op_alurw | op_aluiw) ? {1'b0,OP2[3:0]} : OP2[4:0];
+	wire [4:0] shiDt_OP2 = (op_alurw | op_aluiw) ? {1'b0,OP2[3:0]} : OP2[4:0];
 	//sll
-	assign res_sll =  OP1 << shift_OP2;
+	assign res_sll =  OP1 << shiDt_OP2;
 	//srl
-	assign res_srl = OP1 >> shift_OP2;
+	assign res_srl = OP1 >> shiDt_OP2;
 	//sra
-	assign res_sra = $signed(OP1) >>> shift_OP2;
+	assign res_sra = $signed(OP1) >>> shiDt_OP2;
 	//xor
 	assign res_xor = OP1 ^ OP2;
 	//and
@@ -136,8 +136,8 @@ module execute(
 	wire geu = ~ltu;
 	wire eq = ~ne;
 	//跳转的的下一个位置
-	wire [`PC_WIDTH - 1 : 0] PC_op1 = (op_jalr) ? D_rs1_data_i : F_PC_i;
-	wire [`PC_WIDTH - 1 : 0] PC_op2 = (op_branch) ? 4 : F_imme_i;
+	wire [`PC_WIDTH - 1 : 0] PC_op1 = (op_jalr) ? D_rs1_data_i : D_PC_i;
+	wire [`PC_WIDTH - 1 : 0] PC_op2 = (op_branch) ? 4 : D_imme_i;
 	assign E_jmp_o = PC_op1 + PC_op2;
 	assign E_jmp_sel_o = 	(branch_eq & ~eq) |
 							(branch_ne & ~ne) | 
