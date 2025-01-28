@@ -60,3 +60,4 @@ end
 					 load_lbu ? {{24{1'b0}},data[7:0]} :
 					 {{16{1'b0}},data[15:0]};
 endmodule
+
