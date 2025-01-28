@@ -1,18 +1,18 @@
 `include "define.v"
 module id(
-	input wire [`INSTR_WIDTH - 1:0]   FD_instr_i,
+	input wire [`INSTR_WIDTH - 1:0]   	FD_instr_i,
 	//output
-	output wire						  D_sel_reg_o,
-	output wire [4:0]                 D_rs1_o,
-	output wire [4:0]                 D_rs2_o,
-	output wire                       D_need_dstE_o,
-	output wire [4:0]                 D_dstE_o,
-	output wire [`OP_WIDTH - 1:0]     D_epcode_o,
-	output wire [`BRANCH_WIDTH - 1:0] D_branch_op_o,
-	output wire [`STORE_WIDTH - 1:0]  D_store_op_o,
-	output wire [`LOAD_WIDTH - 1:0]	  D_load_op_o,
-	output wire [`XLEN - 1:0]         D_imme_o,
-	output wire [`ALU_WIDTH - 1:0]    D_ALU_op_o
+	output wire				D_sel_reg_o,
+	output wire [4:0]                	D_rs1_o,
+	output wire [4:0]                	D_rs2_o,
+	output wire                       	D_need_dstE_o,
+	output wire [4:0]                 	D_dstE_o,
+	output wire [`OP_WIDTH - 1:0]     	D_epcode_o,
+	output wire [`BRANCH_WIDTH - 1:0] 	D_branch_op_o,
+	output wire [`STORE_WIDTH - 1:0]  	D_store_op_o,
+	output wire [`LOAD_WIDTH - 1:0]	  	D_load_op_o,
+	output wire [`XLEN - 1:0]         	D_imme_o,
+	output wire [`ALU_WIDTH - 1:0]    	D_ALU_op_o
 );
 //指令分解
 	wire [6:0] opcode = FD_instr_i[6:0];

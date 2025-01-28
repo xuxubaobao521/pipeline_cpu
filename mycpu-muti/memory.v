@@ -2,12 +2,12 @@
 module memory(
 	//input
 	input clk_i,
-	input wire [`STORE_WIDTH - 1:0]  ED_store_op_i,
-	input wire [`LOAD_WIDTH - 1:0]	 ED_load_op_i,
-	input wire [`XLEN - 1:0]         ED_valE_i,
-	input wire [`XLEN - 1:0]		 ED_rs2_data_i,
+	input wire [`STORE_WIDTH - 1:0]  	ED_store_op_i,
+	input wire [`LOAD_WIDTH - 1:0]	 	ED_load_op_i,
+	input wire [`XLEN - 1:0]         	ED_valE_i,
+	input wire [`XLEN - 1:0]		ED_rs2_data_i,
 	//output
-	output wire [`XLEN - 1:0]        M_valM_o
+	output wire [`XLEN - 1:0]        	M_valM_o
 );
 	//load OP
 	wire load_lb = ED_load_op_i[`load_lb];

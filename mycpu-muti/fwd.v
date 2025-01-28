@@ -1,23 +1,23 @@
 `include "define.v"
 module fwd(
-	input wire[4:0]					D_rs1_i,
-	input wire[4:0] 				D_rs2_i,
+	input wire[4:0]				D_rs1_i,
+	input wire[4:0] 			D_rs2_i,
 	
 	input wire[`XLEN - 1:0]			D_rs1_data_i,
 	input wire[`XLEN - 1:0] 		D_rs2_data_i,
 
-	input wire						DD_need_dstE_i,
-	input wire[4:0] 				DD_dstE_i,
+	input wire				DD_need_dstE_i,
+	input wire[4:0] 			DD_dstE_i,
 	input wire[`XLEN - 1:0] 		E_valE_i,
 
-	input wire 						ED_need_dstE_i,
-	input wire[4:0] 				ED_dstE_i,
-	input wire						ED_sel_reg_i,
+	input wire 				ED_need_dstE_i,
+	input wire[4:0] 			ED_dstE_i,
+	input wire				ED_sel_reg_i,
 	input wire[`XLEN - 1:0] 		ED_valE_i,
 	input wire[`XLEN - 1:0] 		M_valM_i,
 	
-	input wire						MD_need_dstE_i,
-	input wire[4:0]					MD_dstE_i,
+	input wire				MD_need_dstE_i,
+	input wire[4:0]				MD_dstE_i,
 	input wire[`XLEN - 1:0]			W_data_i,
 
 	output wire [`XLEN - 1:0] 		D_fwdA_o,

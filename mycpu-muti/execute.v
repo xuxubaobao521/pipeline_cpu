@@ -1,22 +1,22 @@
 `include "define.v"
 module execute(
 	//input
-	input wire [`XLEN - 1:0] 		 DD_rs1_data_i,
-	input wire [`XLEN - 1:0] 		 DD_rs2_data_i,
-	input wire [`OP_WIDTH - 1:0]     DD_epcode_i,
-	input wire [`BRANCH_WIDTH - 1:0] DD_branch_op_i,
-	input wire [`XLEN - 1:0]         DD_imme_i,
-	input wire [`ALU_WIDTH - 1:0]    DD_ALU_op_i,
-	input wire [`PC_WIDTH - 1:0]     DD_PC_i,
-	input wire [`PC_WIDTH - 1:0]     DD_nPC_i,
+	input wire [`XLEN - 1:0] 		DD_rs1_data_i,
+	input wire [`XLEN - 1:0] 		DD_rs2_data_i,
+	input wire [`OP_WIDTH - 1:0]    	DD_epcode_i,
+	input wire [`BRANCH_WIDTH - 1:0]	DD_branch_op_i,
+	input wire [`XLEN - 1:0]         	DD_imme_i,
+	input wire [`ALU_WIDTH - 1:0]   	DD_ALU_op_i,
+	input wire [`PC_WIDTH - 1:0]    	DD_PC_i,
+	input wire [`PC_WIDTH - 1:0]    	DD_nPC_i,
 	//output
 	//结果
-	output wire [`XLEN - 1:0]		 E_valE_o,
+	output wire [`XLEN - 1:0]		E_valE_o,
 
 	//写入内存的地址
 	//跳转的地址
-	output wire [`PC_WIDTH - 1:0]	 E_nPC_o,
-	output wire [`XLEN - 1:0]		 E_jmp_o,
+	output wire [`PC_WIDTH - 1:0]	 	E_nPC_o,
+	output wire [`XLEN - 1:0]		E_jmp_o,
 	output wire E_jmp_sel_o
 );
 	//opcode OP

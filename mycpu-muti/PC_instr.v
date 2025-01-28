@@ -1,12 +1,12 @@
 `include "define.v"
 module PC_instr(
 	//input
-	input wire [`PC_WIDTH - 1 : 0] F_PC_i,
+	input wire [`PC_WIDTH - 1 : 0] 		F_PC_i,
 	//output
-	output wire					mini_jmp_sel_o,
-	output wire [`XLEN - 1:0]	mini_jmp_o,
-	output wire					F_commit_o,
-	output wire [`INSTR_WIDTH - 1 : 0] instr_o
+	output wire				mini_jmp_sel_o,
+	output wire [`XLEN - 1:0]		mini_jmp_o,
+	output wire				F_commit_o,
+	output wire [`INSTR_WIDTH - 1 : 0] 	instr_o
 );
 	wire[`OP_WIDTH - 1:0] mini_epcode;
 	wire[`XLEN - 1:0] mini_imme;
