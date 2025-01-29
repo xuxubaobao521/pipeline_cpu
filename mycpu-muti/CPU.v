@@ -49,6 +49,8 @@ module CPU(
 	wire 					F_commit;
 	wire					mini_jmp_sel;
 	wire [`PC_WIDTH - 1:0]	   		mini_jmp;
+	wire 					F_train_predict;
+	wire 					F_train_vaild;
 	//********************************
 	//fetch_reg
 	//********************************
@@ -58,6 +60,8 @@ module CPU(
 	wire [`PC_WIDTH - 1:0]     		FD_PC;
 	wire [`PC_WIDTH - 1:0]     		FD_nPC;
 	wire 					FD_commit;
+	wire 					FD_train_predict;
+	wire 					FD_train_vaild;
 	//********************************
 	//decode
 	//********************************
@@ -96,12 +100,14 @@ module CPU(
 	wire [`XLEN - 1:0]			DD_rs2_data;
 	wire [`XLEN - 1:0] 			DD_imme;
 	wire [`INSTR_WIDTH - 1:0]		DD_instr;
+	wire 					DD_train_predict;
+	wire 					DD_train_vaild;
 	//********************************
 	//execute
 	//********************************
 	wire [`XLEN - 1:0]			E_valE;
 	wire [`XLEN - 1:0]			E_jmp;
-	wire 					E_jmp_sel;
+	wire 					E_train_taken;
 	wire [`PC_WIDTH - 1:0]  		E_nPC;
 	//********************************
 	//execute reg
@@ -114,11 +120,13 @@ module CPU(
 	wire                       		ED_need_dstE;
 	wire [4:0]                 		ED_dstE;
 	wire [`PC_WIDTH - 1:0]    		ED_jmp;
-	wire					ED_jmp_sel;
 	wire [`PC_WIDTH - 1:0]     		ED_PC;
 	wire [`PC_WIDTH - 1:0]     		ED_nPC;
 	wire					ED_commit;
 	wire [`INSTR_WIDTH - 1:0]		ED_instr;
+	wire					ED_train_taken;
+	wire 					ED_train_predict;
+	wire 					ED_train_vaild;
 	//********************************
 	//memory
 	//********************************
@@ -135,6 +143,9 @@ module CPU(
 	wire [`PC_WIDTH - 1:0]     		MD_nPC;
 	wire					MD_commit;
 	wire [`INSTR_WIDTH - 1:0]		MD_instr;
+	wire					MD_train_taken;
+	wire 					MD_train_predict;
+	wire 					MD_train_vaild;
 	//********************************
 	//write_back
 	//********************************
@@ -149,7 +160,7 @@ module CPU(
 		.D_rs2_i			(D_rs2			),
 		.DD_dstE_i			(DD_dstE		),
 		.DD_need_dstE_i			(DD_need_dstE		),
-		.E_jmp_sel_i			(E_jmp_sel		),
+		.E_train_taken_i		(E_train_taken		),
 
 		.PC_stall_o			(PC_stall		),
 		.PC_bubble_o			(PC_stall		),
@@ -181,7 +192,8 @@ module CPU(
 	);
 	PC_sel PC_sel(
 		//in
-		.ED_jmp_sel_i			(ED_jmp_sel		),
+		.ED_train_vaild_i		(ED_train_vaild		),
+		.ED_train_taken_i		(ED_train_taken		),
 		.ED_jmp_i			(ED_jmp			),
 		//out
 		.F_PC_i				(F_PC			),
@@ -195,6 +207,8 @@ module CPU(
 		.instr_o			(instr			),
 		.mini_jmp_o			(mini_jmp		),
 		.F_commit_o			(F_commit		),
+		.F_train_vaild_o		(F_train_vaild		),
+		.F_train_predict_o		(F_train_predict	),
 		.mini_jmp_sel_o			(mini_jmp_sel		)
 	);
 	PC_next PC_next(
@@ -215,7 +229,11 @@ module CPU(
 		.F_PC_i				(F_sel_PC		),
 		.F_nPC_i			(nPC			),
 		.F_commit_i			(F_commit		),
+		.F_train_predict_i		(F_train_predict	),
+		.F_train_vaild_i		(F_train_vaild		),
 		//output
+		.FD_train_predict_o		(FD_train_predict	),
+		.FD_train_vaild_o		(FD_train_vaild		),
 		.FD_PC_o			(FD_PC			),
 		.FD_nPC_o			(FD_nPC			),
 		.FD_commit_o			(FD_commit		),
@@ -306,8 +324,12 @@ module CPU(
 		.D_rs2_data_i			(D_fwdB			),
 		.D_imme_i			(D_imme			),
 		.D_instr_i			(FD_instr		),
+		.D_train_predict_i		(FD_train_predict	),
+		.D_train_vaild_i		(FD_train_vaild		),
 	//output
 		.DD_instr_o			(DD_instr		),
+		.DD_train_predict_o		(DD_train_predict	),
+		.DD_train_vaild_o		(DD_train_vaild		),
 		.DD_epcode_o			(DD_epcode		),
 		.DD_store_op_o			(DD_store_op		),
 		.DD_load_op_o			(DD_load_op		),
@@ -340,11 +362,12 @@ module CPU(
 		.DD_nPC_i			(DD_nPC			),
 		.DD_ALU_op_i			(DD_ALU_op		),
 		.DD_PC_i			(DD_PC			),
+		.DD_train_predict_i		(DD_train_predict	),
 		//out
 		.E_valE_o			(E_valE			),
 		.E_jmp_o			(E_jmp			),
 		.E_nPC_o			(E_nPC			),
-		.E_jmp_sel_o			(E_jmp_sel		)
+		.E_train_taken_o		(E_train_taken		)
 	);
 	execute_reg execute_reg(
 		//in
@@ -364,10 +387,14 @@ module CPU(
 		.E_nPC_i			(E_nPC			),
 		.E_valE_i			(E_valE			),
 		.E_jmp_i			(E_jmp			),
-		.E_jmp_sel_i			(E_jmp_sel		),
+		.E_train_taken_i		(E_train_taken		),
+		.DD_train_predict_i		(DD_train_predict	),
+		.DD_train_vaild_i		(DD_train_vaild		),
 	
 		.ED_instr_o			(ED_instr		),
 		.ED_PC_o			(ED_PC			),
+		.ED_train_predict_o		(ED_train_predict	),
+		.ED_train_vaild_o		(ED_train_vaild		),
 		.ED_nPC_o			(ED_nPC			),
 		.ED_commit_o			(ED_commit		),
 		.ED_store_op_o			(ED_store_op		),
@@ -376,7 +403,7 @@ module CPU(
 		.ED_load_op_o			(ED_load_op		),
 		.ED_sel_reg_o			(ED_sel_reg		),
 		.ED_jmp_o			(ED_jmp			),
-		.ED_jmp_sel_o			(ED_jmp_sel		),
+		.ED_train_taken_o		(ED_train_taken		),
 		.ED_rs2_data_o			(ED_rs2_data		),
 		.ED_valE_o			(ED_valE		)
 	);
@@ -408,8 +435,14 @@ module CPU(
 		.ED_nPC_i			(ED_nPC			),
 		.ED_commit_i			(ED_commit		),
 		.ED_instr_i			(ED_instr		),
+		.ED_train_taken_i		(ED_train_taken		),
+		.ED_train_predict_i		(ED_train_predict	),
+		.ED_train_vaild_i		(ED_train_vaild		),
 		//output
 		.MD_instr_o			(MD_instr		),
+		.MD_train_taken_o		(MD_train_taken		),
+		.MD_train_predict_o		(MD_train_predict	),
+		.MD_train_vaild_o		(MD_train_vaild		),
 		.MD_PC_o			(MD_PC			),
 		.MD_nPC_o			(MD_nPC			),
 		.MD_commit_o			(MD_commit		),

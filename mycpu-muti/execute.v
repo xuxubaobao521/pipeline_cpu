@@ -9,6 +9,7 @@ module execute(
 	input wire [`ALU_WIDTH - 1:0]   	DD_ALU_op_i,
 	input wire [`PC_WIDTH - 1:0]    	DD_PC_i,
 	input wire [`PC_WIDTH - 1:0]    	DD_nPC_i,
+	input wire 				DD_train_predict_i,
 	//output
 	//结果
 	output wire [`XLEN - 1:0]		E_valE_o,
@@ -17,7 +18,7 @@ module execute(
 	//跳转的地址
 	output wire [`PC_WIDTH - 1:0]	 	E_nPC_o,
 	output wire [`XLEN - 1:0]		E_jmp_o,
-	output wire E_jmp_sel_o
+	output wire E_train_taken_o
 );
 	//opcode OP
 	wire op_branch = DD_epcode_i[`op_branch];
@@ -137,15 +138,15 @@ module execute(
 	wire eq = ~ne;
 	//跳转的的下一个位置
 	wire [`PC_WIDTH - 1 : 0] PC_op1 = (op_jalr) ? DD_rs1_data_i : DD_PC_i;
-	wire [`PC_WIDTH - 1 : 0] PC_op2 = (op_branch) ? 4 : DD_imme_i;
+	wire [`PC_WIDTH - 1 : 0] PC_op2 = (op_jalr) ? DD_imme_i : 4;
 	assign E_jmp_o = PC_op1 + PC_op2;
-	assign E_jmp_sel_o = 	(branch_eq & ~eq) |
-							(branch_ne & ~ne) | 
-							(branch_lt & ~lt) |
-							(branch_ge & ~ge) | 
-							(branch_ltu & ~ltu) |
-							(branch_geu & ~geu) | op_jalr;
-	assign E_nPC_o = E_jmp_sel_o ? E_jmp_o : DD_nPC_i;
+	assign E_train_taken_o =~(((branch_eq & eq) |
+				(branch_ne & ne) | 
+				(branch_lt & lt) |
+				(branch_ge & ge) | 
+				(branch_ltu & ltu) |
+				(branch_geu & geu)) ^ DD_train_predict_i);
+	assign E_nPC_o = E_train_taken_o ? DD_nPC_i : E_jmp_o;
 endmodule
 
 

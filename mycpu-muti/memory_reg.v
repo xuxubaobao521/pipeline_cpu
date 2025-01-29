@@ -14,6 +14,9 @@ module memory_reg(
 	input wire [`PC_WIDTH -1:0]	ED_nPC_i,
 	input wire 			ED_commit_i,
 	input wire [`INSTR_WIDTH - 1:0]	ED_instr_i,
+	input wire			ED_train_predict_i,
+	input wire 			ED_train_vaild_i,
+	input wire 			ED_train_taken_i,
 	//output
 	output reg [`INSTR_WIDTH - 1:0]	MD_instr_o,
 	output reg			MD_sel_reg_o,
@@ -21,6 +24,9 @@ module memory_reg(
 	output reg [`XLEN - 1:0]	MD_valE_o,
 	output reg                     	MD_need_dstE_o,
 	output reg [4:0]                MD_dstE_o,
+	output reg			MD_train_predict_o,
+	output reg 			MD_train_vaild_o,
+	output reg 			MD_train_taken_o,
 	output reg [`PC_WIDTH - 1:0]	MD_PC_o,
 	output reg [`PC_WIDTH -1:0]	MD_nPC_o,
 	output reg 			MD_commit_o
@@ -36,6 +42,9 @@ module memory_reg(
 			MD_nPC_o		<= `nop_nPC;
 			MD_commit_o		<= `nop_commit;
 			MD_instr_o		<= `nop_instr;
+			MD_train_vaild_o	<= 0;
+			MD_train_vaild_o	<= 0;
+			MD_train_taken_o	<= 0;
 		end
 		else if(~M_stall_i)begin
 			MD_sel_reg_o 		<= ED_sel_reg_i;
@@ -47,6 +56,9 @@ module memory_reg(
 			MD_nPC_o		<= ED_nPC_i;
 			MD_commit_o		<= ED_commit_i;
 			MD_instr_o		<= ED_instr_i;
+			MD_train_taken_o	<= ED_train_taken_i;
+			MD_train_vaild_o	<= ED_train_vaild_i;
+			MD_train_predict_o	<= ED_train_predict_i;
 		end
 	end
 endmodule

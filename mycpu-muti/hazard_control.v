@@ -6,7 +6,7 @@ module hazard_control(
 	input wire [4:0]		D_rs2_i,
 	input wire [4:0]        DD_dstE_i,
 	input wire				DD_need_dstE_i,
-	input wire 				E_jmp_sel_i,
+	input wire 				E_train_taken_i,
 
 	output wire				PC_stall_o,
 	output wire				PC_bubble_o,
@@ -25,9 +25,9 @@ module hazard_control(
 	assign PC_stall_o = (op_load) & (D_rs1_i == DD_dstE_i | D_rs2_i == DD_dstE_i) &	DD_need_dstE_i;
 	assign PC_bubble_o = 0;
 	assign F_stall_o = (op_load) & (D_rs1_i == DD_dstE_i | D_rs2_i == DD_dstE_i) &	DD_need_dstE_i;
-	assign F_bubble_o = (op_branch | op_jalr) & (E_jmp_sel_i);
+	assign F_bubble_o = (op_branch & (~E_train_taken_i)) & op_jalr;
 	assign D_stall_o = 0;
-	assign D_bubble_o = ((op_branch | op_jalr) & (E_jmp_sel_i)) | ((op_load) & (D_rs1_i == DD_dstE_i | D_rs2_i == DD_dstE_i) & DD_need_dstE_i);
+	assign D_bubble_o = ((op_branch & (~E_train_taken_i)) & op_jalr) | ((op_load) & (D_rs1_i == DD_dstE_i | D_rs2_i == DD_dstE_i) & DD_need_dstE_i);
 	assign M_stall_o = 0;
 	assign M_bubble_o = 0;
 endmodule

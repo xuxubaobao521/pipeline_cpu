@@ -5,6 +5,8 @@ module PC_instr(
 	//output
 	output wire				mini_jmp_sel_o,
 	output wire [`XLEN - 1:0]		mini_jmp_o,
+	output wire 				F_train_vaild_o,
+	output wire 				F_train_predict_o,
 	output wire				F_commit_o,
 	output wire [`INSTR_WIDTH - 1 : 0] 	instr_o
 );
@@ -35,8 +37,10 @@ module PC_instr(
 	);
 	wire op_branch = mini_epcode[`op_branch];
 	wire op_jal = mini_epcode[`op_jal];
-	
+	assign F_train_vaild_o = op_branch;
+	assign F_train_predict_o = 1;
 	assign mini_jmp_sel_o = op_branch | op_jal;
 	assign mini_jmp_o = mini_imme + F_PC_i;
+	
 	assign F_commit_o = 1;
 endmodule
