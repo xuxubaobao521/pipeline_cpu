@@ -47,8 +47,10 @@ module CPU(
 	wire [4:0]                 		F_dstE;
 	wire [`PC_WIDTH - 1:0]	   		F_sel_PC;
 	wire 					F_commit;
-	wire					mini_jmp_sel;
-	wire [`PC_WIDTH - 1:0]	   		mini_jmp;
+	wire					mini_op_branch;
+	wire					mini_op_jal;
+	wire [`PC_WIDTH - 1:0]	   		mini_jal_jmp;
+	wire [`PC_WIDTH - 1:0]			mini_branch_jmp;
 	wire 					F_train_predict;
 	wire 					F_train_vaild;
 	//********************************
@@ -208,19 +210,33 @@ module CPU(
 		.F_PC_i				(F_sel_PC		),
 		//out
 		.instr_o			(instr			),
-		.mini_jmp_o			(mini_jmp		),
+		.mini_jal_jmp_o			(mini_jal_jmp		),
+		.mini_branch_jmp_o		(mini_branch_jmp	),
 		.F_commit_o			(F_commit		),
 		.F_train_vaild_o		(F_train_vaild		),
-		.F_train_predict_o		(F_train_predict	),
-		.mini_jmp_sel_o			(mini_jmp_sel		)
+		.mini_op_branch_o		(mini_op_branch		),
+		.mini_op_jal_o			(mini_op_jal		)
+	);
+	CBP CBP(
+		//in
+		.rst				(rst			),
+		.clk_i				(clk			),
+		.MD_train_taken_i		(MD_train_taken		),
+		.MD_train_vaild_i		(MD_train_vaild		),
+		//out
+		.F_train_predict_o		(F_train_predict	)
+		
 	);
 	PC_next PC_next(
 		//in
 		.F_PC_i				(F_sel_PC		),
-		.mini_jmp_sel_i			(mini_jmp_sel		),
-		.mini_jmp_i			(mini_jmp		),
+		.mini_op_branch_i		(mini_op_branch		),
+		.mini_op_jal_i			(mini_op_jal		),
+		.mini_jal_jmp_i			(mini_jal_jmp		),
+		.mini_branch_jmp_i		(mini_branch_jmp	),
+		.F_train_predict_i		(F_train_predict	),
 		//out
-		.nPC_o(nPC)
+		.nPC_o				(nPC			)
 	);
 	fetch_reg fetch_reg(
 		//input
@@ -242,6 +258,7 @@ module CPU(
 		.FD_commit_o			(FD_commit		),
 		.FD_instr_o			(FD_instr		)
 	);
+	
 	//********************************
 	//fetch
 	//********************************

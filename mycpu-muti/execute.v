@@ -138,15 +138,15 @@ module execute(
 	wire geu = ~ltu;
 	wire eq = ~ne;
 	//跳转的的下一个位置
-	wire [`PC_WIDTH - 1 : 0] PC_op1 = (op_jalr) ? DD_rs1_data_i : DD_PC_i;
-	wire [`PC_WIDTH - 1 : 0] PC_op2 = (op_jalr) ? DD_imme_i : 4;
-	assign E_jmp_o = PC_op1 + PC_op2;
 	assign E_train_taken_o =~(((branch_eq & eq) |
 				(branch_ne & ne) | 
 				(branch_lt & lt) | 
 				(branch_ge & ge) | 
 				(branch_ltu & ltu) |
 				(branch_geu & geu)) ^ DD_train_predict_i);
+	wire [`PC_WIDTH - 1 : 0] PC_op1 = (op_jalr) ? DD_rs1_data_i : DD_PC_i;
+	wire [`PC_WIDTH - 1 : 0] PC_op2 = (op_jalr | (op_branch & ~DD_train_predict_i)) ? DD_imme_i : 4;
+	assign E_jmp_o = PC_op1 + PC_op2;
 	assign E_op_jalr_o = op_jalr;
 	assign E_nPC_o = (op_branch & ~E_train_taken_o) | op_jalr ? E_jmp_o : DD_nPC_i;
 endmodule

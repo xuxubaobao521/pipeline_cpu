@@ -3,10 +3,11 @@ module PC_instr(
 	//input
 	input wire [`PC_WIDTH - 1 : 0] 		F_PC_i,
 	//output
-	output wire				mini_jmp_sel_o,
-	output wire [`XLEN - 1:0]		mini_jmp_o,
+	output wire				mini_op_branch_o,
+	output wire 				mini_op_jal_o,
+	output wire [`XLEN - 1:0]		mini_jal_jmp_o,
+	output wire [`XLEN - 1:0]		mini_branch_jmp_o,
 	output wire 				F_train_vaild_o,
-	output wire 				F_train_predict_o,
 	output wire				F_commit_o,
 	output wire [`INSTR_WIDTH - 1 : 0] 	instr_o
 );
@@ -35,12 +36,12 @@ module PC_instr(
 		//addr
 		.D_dstE_o()
 	);
-	wire op_branch = mini_epcode[`op_branch];
-	wire op_jal = mini_epcode[`op_jal];
-	assign F_train_vaild_o = op_branch;
-	assign F_train_predict_o = 1;
-	assign mini_jmp_sel_o = op_branch | op_jal;
-	assign mini_jmp_o = mini_imme + F_PC_i;
 	
+	assign mini_op_branch_o = mini_epcode[`op_branch];
+	assign mini_op_jal_o = mini_epcode[`op_jal];
+	assign F_train_vaild_o = mini_op_branch_o;
+	assign mini_jal_jmp_o = mini_imme + F_PC_i;
+	assign mini_branch_jmp_o = mini_imme + F_PC_i;
 	assign F_commit_o = 1;
 endmodule
+
