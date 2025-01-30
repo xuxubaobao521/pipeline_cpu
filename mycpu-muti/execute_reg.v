@@ -19,6 +19,7 @@ module execute_reg(
 	input wire [`INSTR_WIDTH - 1:0]		DD_instr_i,
 	input wire				DD_train_predict_i,
 	input wire 				DD_train_vaild_i,
+	input wire				E_op_jalr_i,
 	
 	output reg [`INSTR_WIDTH - 1:0]		ED_instr_o,
 	output reg [`STORE_WIDTH - 1:0]  	ED_store_op_o,
@@ -34,6 +35,7 @@ module execute_reg(
 	output reg				ED_train_predict_o,
 	output reg 				ED_train_vaild_o,
 	output reg				ED_train_taken_o,
+	output reg				ED_op_jalr_o,
 	output reg [4:0]                 	ED_dstE_o
 );
 	always @(posedge clk_i) begin
@@ -53,6 +55,7 @@ module execute_reg(
 			ED_instr_o	<= `nop_instr;
 			ED_train_vaild_o	<= 0;
 			ED_train_predict_o	<= 0;
+			ED_op_jalr_o		<= 0;
 		end
 		else begin
 			ED_store_op_o 	<= DD_store_op_i;
@@ -70,6 +73,7 @@ module execute_reg(
 			ED_instr_o	<= DD_instr_i;
 			ED_train_vaild_o	<=DD_train_vaild_i;
 			ED_train_predict_o	<=DD_train_predict_i;
+			ED_op_jalr_o		<=E_op_jalr_i;
 		end
 	end
 endmodule

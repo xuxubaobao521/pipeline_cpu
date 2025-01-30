@@ -18,6 +18,7 @@ module execute(
 	//跳转的地址
 	output wire [`PC_WIDTH - 1:0]	 	E_nPC_o,
 	output wire [`XLEN - 1:0]		E_jmp_o,
+	output wire				E_op_jalr_o,
 	output wire E_train_taken_o
 );
 	//opcode OP
@@ -142,11 +143,12 @@ module execute(
 	assign E_jmp_o = PC_op1 + PC_op2;
 	assign E_train_taken_o =~(((branch_eq & eq) |
 				(branch_ne & ne) | 
-				(branch_lt & lt) |
+				(branch_lt & lt) | 
 				(branch_ge & ge) | 
 				(branch_ltu & ltu) |
 				(branch_geu & geu)) ^ DD_train_predict_i);
-	assign E_nPC_o = E_train_taken_o ? DD_nPC_i : E_jmp_o;
+	assign E_op_jalr_o = op_jalr;
+	assign E_nPC_o = (op_branch & ~E_train_taken_o) | op_jalr ? E_jmp_o : DD_nPC_i;
 endmodule
 
 

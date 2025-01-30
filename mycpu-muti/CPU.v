@@ -109,6 +109,7 @@ module CPU(
 	wire [`XLEN - 1:0]			E_jmp;
 	wire 					E_train_taken;
 	wire [`PC_WIDTH - 1:0]  		E_nPC;
+	wire 					E_op_jalr;
 	//********************************
 	//execute reg
 	//********************************
@@ -127,6 +128,7 @@ module CPU(
 	wire					ED_train_taken;
 	wire 					ED_train_predict;
 	wire 					ED_train_vaild;
+	wire					ED_op_jalr;
 	//********************************
 	//memory
 	//********************************
@@ -192,6 +194,7 @@ module CPU(
 	);
 	PC_sel PC_sel(
 		//in
+		.ED_op_jalr_i			(ED_op_jalr		),
 		.ED_train_vaild_i		(ED_train_vaild		),
 		.ED_train_taken_i		(ED_train_taken		),
 		.ED_jmp_i			(ED_jmp			),
@@ -364,6 +367,7 @@ module CPU(
 		.DD_PC_i			(DD_PC			),
 		.DD_train_predict_i		(DD_train_predict	),
 		//out
+		.E_op_jalr_o			(E_op_jalr		),
 		.E_valE_o			(E_valE			),
 		.E_jmp_o			(E_jmp			),
 		.E_nPC_o			(E_nPC			),
@@ -390,7 +394,9 @@ module CPU(
 		.E_train_taken_i		(E_train_taken		),
 		.DD_train_predict_i		(DD_train_predict	),
 		.DD_train_vaild_i		(DD_train_vaild		),
-	
+		.E_op_jalr_i			(E_op_jalr		),
+		//out
+		.ED_op_jalr_o			(ED_op_jalr		),
 		.ED_instr_o			(ED_instr		),
 		.ED_PC_o			(ED_PC			),
 		.ED_train_predict_o		(ED_train_predict	),
