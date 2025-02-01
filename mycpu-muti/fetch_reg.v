@@ -11,12 +11,14 @@ module fetch_reg(
 	input wire				F_commit_i,
 	input wire				F_train_predict_i,
 	input wire 				F_train_vaild_i,
+	input wire [`history_WIDTH - 1:0] 	F_train_history_i,
 	//output
 	output reg[`INSTR_WIDTH - 1:0]		FD_instr_o,
 	output reg[`PC_WIDTH - 1:0]		FD_PC_o,
 	output reg[`PC_WIDTH - 1:0]		FD_nPC_o,
 	output reg				FD_train_predict_o,
 	output reg 				FD_train_vaild_o,
+	output reg [`history_WIDTH - 1:0] 	FD_train_history_o,
 	output reg				FD_commit_o
 );
 	always @(posedge clk_i) begin
@@ -27,6 +29,7 @@ module fetch_reg(
 			FD_commit_o 		<=`nop_commit;
 			FD_train_vaild_o	<= 0;
 			FD_train_vaild_o	<= 0;
+			FD_train_history_o	<= 0;
 		end
 		else if(~F_stall_i)begin
 			FD_instr_o		<=instr_i;
@@ -35,6 +38,7 @@ module fetch_reg(
 			FD_commit_o 		<=F_commit_i;
 			FD_train_vaild_o	<=F_train_vaild_i;
 			FD_train_predict_o	<=F_train_predict_i;
+			FD_train_history_o	<=F_train_history_i;
 		end
 	end
 endmodule

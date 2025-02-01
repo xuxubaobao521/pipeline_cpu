@@ -104,3 +104,6 @@
 `define nop_commit 1'b0
 `define nop_PC    32'd0
 `define nop_nPC 32'd0
+//分支预测器
+`define history_WIDTH 7
+`define PHT_WIDTH 128

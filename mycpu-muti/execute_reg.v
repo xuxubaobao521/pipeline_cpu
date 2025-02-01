@@ -19,6 +19,7 @@ module execute_reg(
 	input wire [`INSTR_WIDTH - 1:0]		DD_instr_i,
 	input wire				DD_train_predict_i,
 	input wire 				DD_train_vaild_i,
+	input wire [`history_WIDTH - 1:0] 	DD_train_history_i,
 	input wire				E_op_jalr_i,
 	
 	output reg [`INSTR_WIDTH - 1:0]		ED_instr_o,
@@ -35,6 +36,7 @@ module execute_reg(
 	output reg				ED_train_predict_o,
 	output reg 				ED_train_vaild_o,
 	output reg				ED_train_taken_o,
+	output reg [`history_WIDTH - 1:0] 	ED_train_history_o,
 	output reg				ED_op_jalr_o,
 	output reg [4:0]                 	ED_dstE_o
 );
@@ -48,14 +50,16 @@ module execute_reg(
 			ED_need_dstE_o 	<= 0;
 			ED_dstE_o	<= 0;
 			ED_jmp_o	<= 0;
-			ED_train_taken_o	<= 0;
 			ED_PC_o		<= `nop_PC;
 			ED_nPC_o	<= `nop_nPC;
 			ED_commit_o	<= `nop_commit;
 			ED_instr_o	<= `nop_instr;
+			ED_op_jalr_o		<= 0;
+			
 			ED_train_vaild_o	<= 0;
 			ED_train_predict_o	<= 0;
-			ED_op_jalr_o		<= 0;
+			ED_train_history_o	<= 0;
+			ED_train_taken_o	<= 0;
 		end
 		else begin
 			ED_store_op_o 	<= DD_store_op_i;
@@ -66,14 +70,16 @@ module execute_reg(
 			ED_need_dstE_o	<= DD_need_dstE_i;
 			ED_dstE_o	<= DD_dstE_i;
 			ED_jmp_o	<= E_jmp_i;
-			ED_train_taken_o	<= E_train_taken_i;
 			ED_PC_o		<= DD_PC_i;
 			ED_nPC_o	<= E_nPC_i;
 			ED_commit_o	<= DD_commit_i;
 			ED_instr_o	<= DD_instr_i;
+			ED_op_jalr_o		<=E_op_jalr_i;
+			
 			ED_train_vaild_o	<=DD_train_vaild_i;
 			ED_train_predict_o	<=DD_train_predict_i;
-			ED_op_jalr_o		<=E_op_jalr_i;
+			ED_train_history_o	<= DD_train_history_i;
+			ED_train_taken_o	<= E_train_taken_i;
 		end
 	end
 endmodule

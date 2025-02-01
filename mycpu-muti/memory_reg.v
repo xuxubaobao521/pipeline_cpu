@@ -17,7 +17,9 @@ module memory_reg(
 	input wire			ED_train_predict_i,
 	input wire 			ED_train_vaild_i,
 	input wire 			ED_train_taken_i,
+	input wire [`history_WIDTH - 1:0] ED_train_history_i,
 	//output
+	output reg [`history_WIDTH - 1:0] MD_train_history_o,
 	output reg [`INSTR_WIDTH - 1:0]	MD_instr_o,
 	output reg			MD_sel_reg_o,
 	output reg [`XLEN - 1:0]	MD_valM_o,
@@ -42,9 +44,10 @@ module memory_reg(
 			MD_nPC_o		<= `nop_nPC;
 			MD_commit_o		<= `nop_commit;
 			MD_instr_o		<= `nop_instr;
-			MD_train_vaild_o	<= 0;
-			MD_train_vaild_o	<= 0;
 			MD_train_taken_o	<= 0;
+			MD_train_vaild_o	<= 0;
+			MD_train_predict_o	<= 0;
+			MD_train_history_o	<= 0;
 		end
 		else if(~M_stall_i)begin
 			MD_sel_reg_o 		<= ED_sel_reg_i;
@@ -59,6 +62,7 @@ module memory_reg(
 			MD_train_taken_o	<= ED_train_taken_i;
 			MD_train_vaild_o	<= ED_train_vaild_i;
 			MD_train_predict_o	<= ED_train_predict_i;
+			MD_train_history_o	<= ED_train_history_i;
 		end
 	end
 endmodule

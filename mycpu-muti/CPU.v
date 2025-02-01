@@ -6,6 +6,8 @@ module CPU(
 	output wire 	[`PC_WIDTH - 1:0] 	cur_pc,
 	output wire 				commit,
 	output wire	[`PC_WIDTH - 1:0]	commit_pc,
+	output wire						commit_taken,
+	output wire						commit_branch,
 	output wire	[`PC_WIDTH - 1:0]	commit_pre_pc
 );
 	//********************************
@@ -53,6 +55,7 @@ module CPU(
 	wire [`PC_WIDTH - 1:0]			mini_branch_jmp;
 	wire 					F_train_predict;
 	wire 					F_train_vaild;
+	wire [`history_WIDTH - 1:0]		F_train_history;
 	//********************************
 	//fetch_reg
 	//********************************
@@ -64,6 +67,7 @@ module CPU(
 	wire 					FD_commit;
 	wire 					FD_train_predict;
 	wire 					FD_train_vaild;
+	wire [`history_WIDTH - 1:0]		FD_train_history;
 	//********************************
 	//decode
 	//********************************
@@ -104,6 +108,7 @@ module CPU(
 	wire [`INSTR_WIDTH - 1:0]		DD_instr;
 	wire 					DD_train_predict;
 	wire 					DD_train_vaild;
+	wire [`history_WIDTH - 1:0]		DD_train_history;
 	//********************************
 	//execute
 	//********************************
@@ -131,6 +136,7 @@ module CPU(
 	wire 					ED_train_predict;
 	wire 					ED_train_vaild;
 	wire					ED_op_jalr;
+	wire [`history_WIDTH - 1:0]		ED_train_history;
 	//********************************
 	//memory
 	//********************************
@@ -150,6 +156,7 @@ module CPU(
 	wire					MD_train_taken;
 	wire 					MD_train_predict;
 	wire 					MD_train_vaild;
+	wire [`history_WIDTH - 1:0]		MD_train_history;
 	//********************************
 	//write_back
 	//********************************
@@ -221,11 +228,23 @@ module CPU(
 		//in
 		.rst				(rst			),
 		.clk_i				(clk			),
-		.MD_train_taken_i		(MD_train_taken		),
-		.MD_train_vaild_i		(MD_train_vaild		),
-		//out
-		.F_train_predict_o		(F_train_predict	)
+		.MD_PC_i			(MD_PC[`history_WIDTH - 1:0]),
+    		.MD_train_history_i		(MD_train_history	),
+    		.MD_train_valid_i		(MD_train_vaild		),
+    		.MD_train_predict_i		(MD_train_predict	),
+    		.MD_train_taken_i		(MD_train_taken		),
 		
+		
+		.ED_train_history_i		(ED_train_history	),
+   		.ED_train_valid_i		(ED_train_vaild		),
+    		.ED_train_predict_i		(ED_train_predict	),
+    		.ED_train_taken_i		(ED_train_taken		),
+    		
+    		.F_PC_i			(F_sel_PC[`history_WIDTH - 1:0]),
+    		.mini_op_branch_i		(mini_op_branch		),
+		//out
+		.F_train_predict_o		(F_train_predict	),
+    		.F_train_history_o		(F_train_history	)
 	);
 	PC_next PC_next(
 		//in
@@ -250,7 +269,9 @@ module CPU(
 		.F_commit_i			(F_commit		),
 		.F_train_predict_i		(F_train_predict	),
 		.F_train_vaild_i		(F_train_vaild		),
+		.F_train_history_i		(F_train_history	),
 		//output
+		.FD_train_history_o		(FD_train_history	),
 		.FD_train_predict_o		(FD_train_predict	),
 		.FD_train_vaild_o		(FD_train_vaild		),
 		.FD_PC_o			(FD_PC			),
@@ -346,7 +367,9 @@ module CPU(
 		.D_instr_i			(FD_instr		),
 		.D_train_predict_i		(FD_train_predict	),
 		.D_train_vaild_i		(FD_train_vaild		),
+		.D_train_history_i		(FD_train_history	),
 	//output
+		.DD_train_history_o		(DD_train_history	),
 		.DD_instr_o			(DD_instr		),
 		.DD_train_predict_o		(DD_train_predict	),
 		.DD_train_vaild_o		(DD_train_vaild		),
@@ -412,7 +435,9 @@ module CPU(
 		.DD_train_predict_i		(DD_train_predict	),
 		.DD_train_vaild_i		(DD_train_vaild		),
 		.E_op_jalr_i			(E_op_jalr		),
-		//out
+		.DD_train_history_i		(DD_train_history	),
+		//output
+		.ED_train_history_o		(ED_train_history	),
 		.ED_op_jalr_o			(ED_op_jalr		),
 		.ED_instr_o			(ED_instr		),
 		.ED_PC_o			(ED_PC			),
@@ -461,7 +486,9 @@ module CPU(
 		.ED_train_taken_i		(ED_train_taken		),
 		.ED_train_predict_i		(ED_train_predict	),
 		.ED_train_vaild_i		(ED_train_vaild		),
+		.ED_train_history_i		(ED_train_history	),
 		//output
+		.MD_train_history_o		(MD_train_history	),
 		.MD_instr_o			(MD_instr		),
 		.MD_train_taken_o		(MD_train_taken		),
 		.MD_train_predict_o		(MD_train_predict	),
@@ -490,6 +517,8 @@ module CPU(
 	assign commit_pc 	= MD_PC;
 	assign commit_pre_pc 	= MD_nPC;
 	assign commit 		= MD_commit;
+	assign commit_branch = MD_train_vaild;
+	assign commit_taken = MD_train_taken & MD_train_vaild;
 endmodule
 
 

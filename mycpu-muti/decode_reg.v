@@ -22,7 +22,9 @@ module decode_reg(
 	input wire [`INSTR_WIDTH - 1:0]		D_instr_i,
 	input wire				D_train_predict_i,
 	input wire 				D_train_vaild_i,
+	input wire [`history_WIDTH - 1:0] 	D_train_history_i,
 	//output
+	output reg [`history_WIDTH - 1:0] 	DD_train_history_o,
 	output reg [`INSTR_WIDTH - 1:0]		DD_instr_o,
 	output reg [`OP_WIDTH - 1:0]     	DD_epcode_o,
 	output reg [`STORE_WIDTH - 1:0]  	DD_store_op_o,
@@ -59,7 +61,8 @@ module decode_reg(
 			DD_commit_o	<=`nop_commit;
 			DD_instr_o	<=`nop_instr;
 			DD_train_vaild_o	<= 0;
-			DD_train_vaild_o	<= 0;
+			DD_train_predict_o	<= 0;
+			DD_train_history_o	<= 0;
 		end
 		else if(~D_stall_i) begin
 			DD_epcode_o 	<=D_epcode_i;
@@ -79,6 +82,7 @@ module decode_reg(
 			DD_instr_o	<= D_instr_i;
 			DD_train_vaild_o	<=D_train_vaild_i;
 			DD_train_predict_o	<=D_train_predict_i;
+			DD_train_history_o	<=D_train_history_i;
 		end
 	end
 endmodule
