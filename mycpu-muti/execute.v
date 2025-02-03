@@ -10,6 +10,8 @@ module execute(
 	input wire [`PC_WIDTH - 1:0]    	DD_PC_i,
 	input wire [`PC_WIDTH - 1:0]    	DD_nPC_i,
 	input wire 				DD_train_predict_i,
+	input wire 				DD_train_local_predict_i,
+	input wire 				DD_train_global_predict_i,
 	//output
 	//结果
 	output wire [`XLEN - 1:0]		E_valE_o,
@@ -19,7 +21,9 @@ module execute(
 	output wire [`PC_WIDTH - 1:0]	 	E_nPC_o,
 	output wire [`XLEN - 1:0]		E_jmp_o,
 	output wire				E_op_jalr_o,
-	output wire E_train_taken_o
+	output wire 				E_train_global_taken_o,
+	output wire 				E_train_local_taken_o,
+	output wire 				E_train_taken_o
 );
 	//opcode OP
 	wire op_branch = DD_epcode_i[`op_branch];
@@ -144,6 +148,18 @@ module execute(
 				(branch_ge & ge) | 
 				(branch_ltu & ltu) |
 				(branch_geu & geu)) ^ DD_train_predict_i);
+	assign E_train_local_taken_o =~(((branch_eq & eq) |
+				(branch_ne & ne) | 
+				(branch_lt & lt) | 
+				(branch_ge & ge) | 
+				(branch_ltu & ltu) |
+				(branch_geu & geu)) ^ DD_train_local_predict_i);
+	assign E_train_global_taken_o =~(((branch_eq & eq) |
+				(branch_ne & ne) | 
+				(branch_lt & lt) | 
+				(branch_ge & ge) | 
+				(branch_ltu & ltu) |
+				(branch_geu & geu)) ^ DD_train_global_predict_i);
 	wire [`PC_WIDTH - 1 : 0] PC_op1 = (op_jalr) ? DD_rs1_data_i : DD_PC_i;
 	wire [`PC_WIDTH - 1 : 0] PC_op2 = (op_jalr | (op_branch & ~DD_train_predict_i)) ? DD_imme_i : 4;
 	assign E_jmp_o = PC_op1 + PC_op2;

@@ -16,12 +16,18 @@ module execute_reg(
 	input wire [`XLEN - 1:0]		E_valE_i,
 	input wire [`PC_WIDTH - 1:0]    	E_jmp_i,
 	input wire				E_train_taken_i,
+	input wire				E_train_global_taken_i,
+	input wire				E_train_local_taken_i,
 	input wire [`INSTR_WIDTH - 1:0]		DD_instr_i,
 	input wire				DD_train_predict_i,
 	input wire 				DD_train_vaild_i,
-	input wire [`history_WIDTH - 1:0] 	DD_train_history_i,
+	input wire [`history_WIDTH - 1:0] 	DD_train_global_history_i,
+	input wire 				DD_train_global_predict_i,
+	input wire				DD_train_local_predict_i,
 	input wire				E_op_jalr_i,
 	
+	output reg				ED_train_global_taken_o,
+	output reg				ED_train_local_taken_o,
 	output reg [`INSTR_WIDTH - 1:0]		ED_instr_o,
 	output reg [`STORE_WIDTH - 1:0]  	ED_store_op_o,
 	output reg [`LOAD_WIDTH - 1:0]   	ED_load_op_o,
@@ -36,7 +42,9 @@ module execute_reg(
 	output reg				ED_train_predict_o,
 	output reg 				ED_train_vaild_o,
 	output reg				ED_train_taken_o,
-	output reg [`history_WIDTH - 1:0] 	ED_train_history_o,
+	output reg				ED_train_local_predict_o,
+	output reg				ED_train_global_predict_o,
+	output reg[`history_WIDTH - 1:0]	ED_train_global_history_o,
 	output reg				ED_op_jalr_o,
 	output reg [4:0]                 	ED_dstE_o
 );
@@ -58,8 +66,12 @@ module execute_reg(
 			
 			ED_train_vaild_o	<= 0;
 			ED_train_predict_o	<= 0;
-			ED_train_history_o	<= 0;
+			ED_train_global_history_o	<= 0;
+			ED_train_global_predict_o	<= 0;
+			ED_train_local_predict_o	<= 0;
 			ED_train_taken_o	<= 0;
+			ED_train_global_taken_o <= 0;
+			ED_train_local_taken_o 	<= 0;
 		end
 		else begin
 			ED_store_op_o 	<= DD_store_op_i;
@@ -76,10 +88,14 @@ module execute_reg(
 			ED_instr_o	<= DD_instr_i;
 			ED_op_jalr_o		<=E_op_jalr_i;
 			
-			ED_train_vaild_o	<=DD_train_vaild_i;
-			ED_train_predict_o	<=DD_train_predict_i;
-			ED_train_history_o	<= DD_train_history_i;
-			ED_train_taken_o	<= E_train_taken_i;
+			ED_train_vaild_o		<=DD_train_vaild_i;
+			ED_train_predict_o		<=DD_train_predict_i;
+			ED_train_global_history_o	<= DD_train_global_history_i;
+			ED_train_global_predict_o	<= DD_train_global_predict_i;
+			ED_train_local_predict_o	<= DD_train_local_predict_i;
+			ED_train_taken_o		<= E_train_taken_i;
+			ED_train_global_taken_o 	<= E_train_global_taken_i;
+			ED_train_local_taken_o 		<= E_train_local_taken_i;
 		end
 	end
 endmodule
