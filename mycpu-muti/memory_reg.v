@@ -22,7 +22,10 @@ module memory_reg(
 	input wire				ED_train_local_predict_i,
 	input wire				ED_train_global_taken_i,
 	input wire				ED_train_local_taken_i,
+	input wire				ED_success_hit_i,
+	input wire				ED_jal_i,
 	//output
+	output reg				MD_jal_o,
 	output reg				MD_train_local_predict_o,
 	output reg				MD_train_global_predict_o,
 	output reg[`history_WIDTH - 1:0]	MD_train_global_history_o,
@@ -37,6 +40,7 @@ module memory_reg(
 	output reg			MD_train_predict_o,
 	output reg 			MD_train_vaild_o,
 	output reg 			MD_train_taken_o,
+	output reg			MD_success_hit_o,
 	output reg [`PC_WIDTH - 1:0]	MD_PC_o,
 	output reg [`PC_WIDTH -1:0]	MD_nPC_o,
 	output reg 			MD_commit_o
@@ -60,6 +64,8 @@ module memory_reg(
 			MD_train_local_predict_o	<= 0;
 			MD_train_global_taken_o <= 0;
 			MD_train_local_taken_o 	<= 0;
+			MD_success_hit_o		<= 0;
+			MD_jal_o				<= 0;
 		end
 		else if(~M_stall_i)begin
 			MD_sel_reg_o 		<= ED_sel_reg_i;
@@ -79,6 +85,8 @@ module memory_reg(
 			MD_train_local_predict_o	<= ED_train_local_predict_i;
 			MD_train_global_taken_o <= ED_train_global_taken_i;
 			MD_train_local_taken_o 	<= ED_train_local_taken_i;
+			MD_success_hit_o		<= ED_success_hit_i;
+			MD_jal_o				<= ED_jal_i;
 		end
 	end
 endmodule

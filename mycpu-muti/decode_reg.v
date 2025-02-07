@@ -25,7 +25,10 @@ module decode_reg(
 	input wire [`history_WIDTH - 1:0] 	D_train_global_history_i,
 	input wire 				D_train_global_predict_i,
 	input wire				D_train_local_predict_i,
+	input wire				D_success_hit_i,
+	input wire				D_jal_i,
 	//output
+	output reg				DD_jal_o,
 	output reg				DD_train_local_predict_o,
 	output reg				DD_train_global_predict_o,
 	output reg[`history_WIDTH - 1:0]	DD_train_global_history_o,
@@ -45,7 +48,8 @@ module decode_reg(
 	output reg				DD_train_predict_o,
 	output reg 				DD_train_vaild_o,
 	output reg [`XLEN - 1:0] 		DD_imme_o,
-	output reg 				DD_commit_o
+	output reg 				DD_commit_o,
+	output reg				DD_success_hit_o
 );
 	always @(posedge clk_i) begin
 		if(D_bubble_i | rst) begin
@@ -69,6 +73,8 @@ module decode_reg(
 			DD_train_global_history_o	<= 0;
 			DD_train_global_predict_o	<= 0;
 			DD_train_local_predict_o	<= 0;
+			DD_success_hit_o			<= 0;
+			DD_jal_o					<= 0;
 		end
 		else if(~D_stall_i) begin
 			DD_epcode_o 	<=D_epcode_i;
@@ -91,6 +97,8 @@ module decode_reg(
 			DD_train_global_history_o		<=D_train_global_history_i;
 			DD_train_global_predict_o		<=D_train_global_predict_i;
 			DD_train_local_predict_o		<=D_train_local_predict_i;
+			DD_success_hit_o				<=D_success_hit_i;
+			DD_jal_o						<=D_jal_i;
 		end
 	end
 endmodule

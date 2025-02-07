@@ -107,3 +107,7 @@
 //分支预测器
 `define history_WIDTH 7
 `define PHT_WIDTH 128
+//BTB
+`define BIA_WIDTH 12
+`define BTA_WIDTH 32
+`define BTB_index_WIDTH 8

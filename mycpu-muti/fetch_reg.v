@@ -14,7 +14,11 @@ module fetch_reg(
 	input wire [`history_WIDTH - 1:0] 	F_train_global_history_i,
 	input wire 				F_train_global_predict_i,
 	input wire				F_train_local_predict_i,
+	input wire				F_success_hit_i,
+	input wire				F_jal_i,
 	//output
+	output reg				FD_jal_o,
+	output reg				FD_success_hit_o,
 	output reg				FD_train_local_predict_o,
 	output reg				FD_train_global_predict_o,
 	output reg[`history_WIDTH - 1:0]	FD_train_global_history_o,
@@ -36,6 +40,8 @@ module fetch_reg(
 			FD_train_global_history_o	<= 0;
 			FD_train_global_predict_o	<= 0;
 			FD_train_local_predict_o	<= 0;
+			FD_success_hit_o			<= 0;
+			FD_jal_o					<= 0;
 		end
 		else if(~F_stall_i)begin
 			FD_instr_o				<=instr_i;
@@ -47,6 +53,8 @@ module fetch_reg(
 			FD_train_global_history_o		<=F_train_global_history_i;
 			FD_train_global_predict_o		<=F_train_global_predict_i;
 			FD_train_local_predict_o		<=F_train_local_predict_i;
+			FD_success_hit_o				<=F_success_hit_i;
+			FD_jal_o						<=F_jal_i;
 		end
 	end
 endmodule

@@ -10,7 +10,9 @@ module CPU(
 	output wire				commit_branch,
 	output wire				commit_global_taken,
 	output wire				commit_local_taken,
-	output wire	[`PC_WIDTH - 1:0]	commit_pre_pc
+	output wire	[`PC_WIDTH - 1:0]	commit_pre_pc,
+	output wire 			commit_predict_jmp,
+	output wire				commit_success_hit
 );
 	//********************************
 	//control
@@ -60,6 +62,7 @@ module CPU(
 	wire [`history_WIDTH - 1:0]		F_train_global_history;
 	wire 					F_train_local_predict;
 	wire					F_train_global_predict;
+	wire					F_success_hit;
 	//********************************
 	//fetch_reg
 	//********************************
@@ -74,6 +77,8 @@ module CPU(
 	wire [`history_WIDTH - 1:0]		FD_train_global_history;
 	wire 					FD_train_local_predict;
 	wire					FD_train_global_predict;
+	wire					FD_success_hit;
+	wire					FD_jal;
 	//********************************
 	//decode
 	//********************************
@@ -117,6 +122,8 @@ module CPU(
 	wire [`history_WIDTH - 1:0]		DD_train_global_history;
 	wire 					DD_train_local_predict;
 	wire					DD_train_global_predict;
+	wire					DD_success_hit;
+	wire					DD_jal;
 	//********************************
 	//execute
 	//********************************
@@ -151,6 +158,8 @@ module CPU(
 	wire					ED_train_global_taken;
 	wire 					ED_train_local_predict;
 	wire					ED_train_global_predict;
+	wire					ED_success_hit;
+	wire					ED_jal;
 	//********************************
 	//memory
 	//********************************
@@ -175,6 +184,8 @@ module CPU(
 	wire					MD_train_global_taken;
 	wire 					MD_train_local_predict;
 	wire					MD_train_global_predict;
+	wire					MD_success_hit;
+	wire					MD_jal;
 	//********************************
 	//write_back
 	//********************************
@@ -272,6 +283,8 @@ module CPU(
 	);
 	PC_next PC_next(
 		//in
+		.rst				(rst			),
+		.clk_i				(clk			),
 		.F_PC_i				(F_sel_PC		),
 		.mini_op_branch_i		(mini_op_branch		),
 		.mini_op_jal_i			(mini_op_jal		),
@@ -279,7 +292,8 @@ module CPU(
 		.mini_branch_jmp_i		(mini_branch_jmp	),
 		.F_train_predict_i		(F_train_predict	),
 		//out
-		.nPC_o				(nPC			)
+		.nPC_o				(nPC			),
+		.F_success_hit_o	(F_success_hit	)
 	);
 	fetch_reg fetch_reg(
 		//input
@@ -296,7 +310,11 @@ module CPU(
 		.F_train_global_history_i	(F_train_global_history	),
     		.F_train_local_predict_i	(F_train_local_predict	),
     		.F_train_global_predict_i	(F_train_global_predict	),
+			.F_success_hit_i			(F_success_hit			),
+			.F_jal_i					(mini_op_jal			),
 		//output
+			.FD_jal_o					(FD_jal					),
+			.FD_success_hit_o			(FD_success_hit			),
     		.FD_train_local_predict_o	(FD_train_local_predict	),
     		.FD_train_global_predict_o	(FD_train_global_predict),
 		.FD_train_global_history_o	(FD_train_global_history),
@@ -398,7 +416,11 @@ module CPU(
 		.D_train_global_history_i	(FD_train_global_history),
     		.D_train_local_predict_i	(FD_train_local_predict	),
     		.D_train_global_predict_i	(FD_train_global_predict),
+			.D_success_hit_i			(FD_success_hit			),
+			.D_jal_i					(FD_jal					),
 		//output
+			.DD_jal_o					(DD_jal					),
+			.DD_success_hit_o			(DD_success_hit			),
     		.DD_train_local_predict_o	(DD_train_local_predict	),
     		.DD_train_global_predict_o	(DD_train_global_predict),
 		.DD_train_global_history_o	(DD_train_global_history),
@@ -476,7 +498,11 @@ module CPU(
     		.DD_train_global_predict_i	(DD_train_global_predict),
     		.E_train_local_taken_i		(E_train_local_taken	),
     		.E_train_global_taken_i		(E_train_global_taken	),
+			.DD_success_hit_i			(DD_success_hit			),
+			.DD_jal_i					(DD_jal					),
 		//output
+			.ED_jal_o					(ED_jal					),
+			.ED_success_hit_o			(ED_success_hit			),
 		.ED_train_local_taken_o		(ED_train_local_taken	),
 		.ED_train_global_taken_o	(ED_train_global_taken	),
     		.ED_train_local_predict_o	(ED_train_local_predict	),
@@ -535,7 +561,11 @@ module CPU(
     		.ED_train_global_predict_i	(ED_train_global_predict),
     		.ED_train_local_taken_i		(ED_train_local_taken	),
     		.ED_train_global_taken_i	(ED_train_global_taken	),
+			.ED_success_hit_i			(ED_success_hit			),
+			.ED_jal_i					(ED_jal					),
 		//output
+			.MD_jal_o					(MD_jal					),
+			.MD_success_hit_o			(MD_success_hit			),
 		.MD_train_local_taken_o		(MD_train_local_taken	),
 		.MD_train_global_taken_o	(MD_train_global_taken	),
     		.MD_train_local_predict_o	(MD_train_local_predict	),
@@ -573,6 +603,8 @@ module CPU(
 	assign commit_taken = MD_train_taken & MD_train_vaild;
 	assign commit_local_taken = MD_train_vaild & MD_train_local_taken;
 	assign commit_global_taken = MD_train_vaild & MD_train_global_taken;
+	assign commit_success_hit = MD_success_hit;
+	assign commit_predict_jmp = MD_train_predict | MD_jal;
 endmodule
 
 

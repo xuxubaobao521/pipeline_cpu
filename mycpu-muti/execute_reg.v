@@ -25,7 +25,10 @@ module execute_reg(
 	input wire 				DD_train_global_predict_i,
 	input wire				DD_train_local_predict_i,
 	input wire				E_op_jalr_i,
+	input wire				DD_success_hit_i,
+	input wire				DD_jal_i,
 	
+	output reg				ED_jal_o,
 	output reg				ED_train_global_taken_o,
 	output reg				ED_train_local_taken_o,
 	output reg [`INSTR_WIDTH - 1:0]		ED_instr_o,
@@ -46,6 +49,7 @@ module execute_reg(
 	output reg				ED_train_global_predict_o,
 	output reg[`history_WIDTH - 1:0]	ED_train_global_history_o,
 	output reg				ED_op_jalr_o,
+	output reg				ED_success_hit_o,
 	output reg [4:0]                 	ED_dstE_o
 );
 	always @(posedge clk_i) begin
@@ -72,6 +76,8 @@ module execute_reg(
 			ED_train_taken_o	<= 0;
 			ED_train_global_taken_o <= 0;
 			ED_train_local_taken_o 	<= 0;
+			ED_success_hit_o		<= 0;
+			ED_jal_o				<= 0;
 		end
 		else begin
 			ED_store_op_o 	<= DD_store_op_i;
@@ -96,6 +102,8 @@ module execute_reg(
 			ED_train_taken_o		<= E_train_taken_i;
 			ED_train_global_taken_o 	<= E_train_global_taken_i;
 			ED_train_local_taken_o 		<= E_train_local_taken_i;
+			ED_success_hit_o			<= DD_success_hit_i;
+			ED_jal_o					<= DD_jal_i;
 		end
 	end
 endmodule

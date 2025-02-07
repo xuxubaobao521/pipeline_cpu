@@ -81,7 +81,7 @@ module CBP(
 		if(rst) state <= `YN;
 		else if(MD_train_valid_i) state <= next_state;
 	end
-	assign F_train_predict_o = state[1] ? F_train_global_predict_o : F_train_local_predict_o;
+	assign F_train_predict_o = mini_op_branch_i ? state[1] ? F_train_global_predict_o : F_train_local_predict_o : 1'b0;
 endmodule
 
 module global_CBP(
