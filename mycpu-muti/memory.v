@@ -5,7 +5,8 @@ module memory(
 	input wire [`STORE_WIDTH - 1:0]  	ED_store_op_i,
 	input wire [`LOAD_WIDTH - 1:0]	 	ED_load_op_i,
 	input wire [`XLEN - 1:0]         	ED_valE_i,
-	input wire [`XLEN - 1:0]		ED_rs2_data_i,
+	input wire [`XLEN - 1:0]			ED_rs2_data_i,
+	input wire 							execute_vaild_i,
 	//output
 	output wire [`XLEN - 1:0]        	M_valM_o
 );
@@ -24,8 +25,8 @@ module memory(
 	wire store_sd = ED_store_op_i[`store_sd];
 	
 	//load / store
-	wire op_load = load_lb | load_lh | load_lw | load_ld | load_lbu | load_lhu | load_lwu;
-	wire op_store = store_sb | store_sh | store_sw | store_sd;
+	wire op_load = (load_lb | load_lh | load_lw | load_ld | load_lbu | load_lhu | load_lwu) & execute_vaild_i;
+	wire op_store = (store_sb | store_sh | store_sw | store_sd) & execute_vaild_i;
 	
 	import "DPI-C" function void dpi_mem_write(input int addr, input int data, int len);
 	import "DPI-C" function int  dpi_mem_read (input int addr  , input int len);
@@ -36,7 +37,7 @@ always @(*) begin
 	data = dpi_mem_read(ED_valE_i, 4);
     end
     else begin
-	data = 32'B0;
+		data = 32'B0;
     end
 end
 

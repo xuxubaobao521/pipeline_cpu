@@ -2,8 +2,6 @@
 module execute_reg(
 	input wire				rst,
 	input wire				clk_i,
-	input wire 				E_bubble_i,
-	input wire				E_stall_i,
 	input wire [`STORE_WIDTH - 1:0]  	DD_store_op_i,
 	input wire [`LOAD_WIDTH - 1:0]   	DD_load_op_i,
 	input wire				DD_sel_reg_i,
@@ -27,7 +25,11 @@ module execute_reg(
 	input wire				DD_op_jalr_i,
 	input wire				DD_success_hit_i,
 	input wire				DD_jal_i,
+	input wire				decode_vaild_i,
+	input wire				execute_ready_i,
+	input wire				memory_allow_in_i,
 	
+	output reg				execute_vaild_o,
 	output reg				ED_jal_o,
 	output reg				ED_train_global_taken_o,
 	output reg				ED_train_local_taken_o,
@@ -53,7 +55,8 @@ module execute_reg(
 	output reg [4:0]                 	ED_dstE_o
 );
 	always @(posedge clk_i) begin
-		if(E_bubble_i | rst) begin
+		if(rst | ~decode_vaild_i) begin
+			execute_vaild_o	<= 0;
 			ED_store_op_o 	<= 0;
 			ED_load_op_o 	<= 0;
 			ED_sel_reg_o	<= 0;
@@ -79,7 +82,8 @@ module execute_reg(
 			ED_success_hit_o		<= 0;
 			ED_jal_o				<= 0;
 		end
-		else begin
+		else if(execute_ready_i & memory_allow_in_i)begin
+			execute_vaild_o	<= decode_vaild_i;
 			ED_store_op_o 	<= DD_store_op_i;
 			ED_load_op_o 	<= DD_load_op_i;
 			ED_sel_reg_o	<= DD_sel_reg_i;

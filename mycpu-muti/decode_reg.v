@@ -3,8 +3,6 @@ module decode_reg(
 	//input
 	input wire				rst,
 	input wire				clk_i,
-	input wire 				D_bubble_i,
-	input wire				D_stall_i,
 	input wire [`OP_WIDTH - 1:0]     	D_epcode_i,
 	input wire [`STORE_WIDTH - 1:0]  	D_store_op_i,
 	input wire [`LOAD_WIDTH - 1:0]   	D_load_op_i,
@@ -27,10 +25,24 @@ module decode_reg(
 	input wire				D_train_local_predict_i,
 	input wire				D_success_hit_i,
 	input wire				D_jal_i,
+	input wire				D_train_taken_i,
+	input wire				D_train_global_taken_i,
+	input wire				D_train_local_taken_i,
+	input wire				D_op_jalr_i,
+	input wire [`PC_WIDTH - 1:0]    	D_jmp_i,
+	input wire 				decode_control_i,
+	input wire				decode_ready_i,
+	input wire				execute_allow_in_i,
 	//output
-	output reg				DD_jal_o,
-	output reg				DD_train_local_predict_o,
-	output reg				DD_train_global_predict_o,
+	output reg						decode_vaild_o,
+	output reg [`PC_WIDTH - 1:0]    DD_jmp_o,
+	output reg						DD_op_jalr_o,
+	output reg						DD_train_taken_o,
+	output reg						DD_train_global_taken_o,
+	output reg						DD_train_local_taken_o,
+	output reg						DD_jal_o,
+	output reg						DD_train_local_predict_o,
+	output reg						DD_train_global_predict_o,
 	output reg[`history_WIDTH - 1:0]	DD_train_global_history_o,
 	output reg[`INSTR_WIDTH - 1:0]		DD_instr_o,
 	output reg [`OP_WIDTH - 1:0]     	DD_epcode_o,
@@ -52,7 +64,8 @@ module decode_reg(
 	output reg				DD_success_hit_o
 );
 	always @(posedge clk_i) begin
-		if(D_bubble_i | rst) begin
+		if(rst | ~decode_control_i) begin
+			decode_vaild_o	<=0;
 			DD_epcode_o 	<=0;
 			DD_store_op_o	<=0;
 			DD_load_op_o	<=0;
@@ -75,8 +88,14 @@ module decode_reg(
 			DD_train_local_predict_o	<= 0;
 			DD_success_hit_o			<= 0;
 			DD_jal_o					<= 0;
+			DD_train_taken_o			<= 0;
+			DD_train_global_taken_o 	<= 0;
+			DD_train_local_taken_o 		<= 0;
+			DD_jmp_o					<= 0;
+			DD_op_jalr_o				<= 0;
 		end
-		else if(~D_stall_i) begin
+		else if(decode_ready_i & execute_allow_in_i) begin
+			decode_vaild_o	<=decode_control_i;
 			DD_epcode_o 	<=D_epcode_i;
 			DD_store_op_o	<=D_store_op_i;
 			DD_load_op_o	<=D_load_op_i;
@@ -99,6 +118,11 @@ module decode_reg(
 			DD_train_local_predict_o		<=D_train_local_predict_i;
 			DD_success_hit_o				<=D_success_hit_i;
 			DD_jal_o						<=D_jal_i;
+			DD_train_taken_o			<= D_train_taken_i;
+			DD_train_global_taken_o 	<= D_train_global_taken_i;
+			DD_train_local_taken_o 		<= D_train_local_taken_i;
+			DD_jmp_o					<= D_jmp_i;
+			DD_op_jalr_o				<= D_op_jalr_i;
 		end
 	end
 endmodule

@@ -8,22 +8,9 @@ module execute(
 	input wire [`XLEN - 1:0]         	DD_imme_i,
 	input wire [`ALU_WIDTH - 1:0]   	DD_ALU_op_i,
 	input wire [`PC_WIDTH - 1:0]    	DD_PC_i,
-	input wire [`PC_WIDTH - 1:0]    	DD_nPC_i,
-	input wire 				DD_train_predict_i,
-	input wire 				DD_train_local_predict_i,
-	input wire 				DD_train_global_predict_i,
 	//output
 	//结果
-	output wire [`XLEN - 1:0]		E_valE_o,
-
-	//写入内存的地址
-	//跳转的地址
-	output wire [`PC_WIDTH - 1:0]	 	E_nPC_o,
-	output wire [`XLEN - 1:0]		E_jmp_o,
-	output wire				E_op_jalr_o,
-	output wire 				E_train_global_taken_o,
-	output wire 				E_train_local_taken_o,
-	output wire 				E_train_taken_o
+	output wire [`XLEN - 1:0]		E_valE_o
 );
 	//opcode OP
 	wire op_branch = DD_epcode_i[`op_branch];
@@ -130,41 +117,8 @@ module execute(
 
 	wire [`XLEN - 1:0]resw = {res[31:0]};
 	assign E_valE_o = (op_alurw | op_aluiw) ? resw : res;
-	
-	//lt ltu ge geu eq ne
-	// <
-	// op1?+ op2?-
-	//???? 
 	assign lt = (OP1[`XLEN - 1] & ~OP2[`XLEN - 1]) | ((~(OP2[`XLEN - 1] ^ OP1[`XLEN - 1])) & res_add_sub[`XLEN - 1]);
 	assign ltu = ~cout;
-	wire ne = (|res_add_sub);
-	wire ge = ~lt;
-	wire geu = ~ltu;
-	wire eq = ~ne;
-	//跳转的的下一个位置
-	assign E_train_taken_o =~(((branch_eq & eq) |
-				(branch_ne & ne) | 
-				(branch_lt & lt) | 
-				(branch_ge & ge) | 
-				(branch_ltu & ltu) |
-				(branch_geu & geu)) ^ DD_train_predict_i);
-	assign E_train_local_taken_o =~(((branch_eq & eq) |
-				(branch_ne & ne) | 
-				(branch_lt & lt) | 
-				(branch_ge & ge) | 
-				(branch_ltu & ltu) |
-				(branch_geu & geu)) ^ DD_train_local_predict_i);
-	assign E_train_global_taken_o =~(((branch_eq & eq) |
-				(branch_ne & ne) | 
-				(branch_lt & lt) | 
-				(branch_ge & ge) | 
-				(branch_ltu & ltu) |
-				(branch_geu & geu)) ^ DD_train_global_predict_i);
-	wire [`PC_WIDTH - 1 : 0] PC_op1 = (op_jalr) ? DD_rs1_data_i : DD_PC_i;
-	wire [`PC_WIDTH - 1 : 0] PC_op2 = (op_jalr | (op_branch & ~DD_train_predict_i)) ? DD_imme_i : 4;
-	assign E_jmp_o = PC_op1 + PC_op2;
-	assign E_op_jalr_o = op_jalr;
-	assign E_nPC_o = (op_branch & ~E_train_taken_o) | op_jalr ? E_jmp_o : DD_nPC_i;
 endmodule
 
 

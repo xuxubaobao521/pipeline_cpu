@@ -17,16 +17,23 @@ module CPU(
 	//********************************
 	//control
 	//********************************
-	wire					PC_stall;
-	wire					PC_bubble;
-	wire					F_stall;
-	wire					F_bubble;
-	wire					D_stall;
-	wire					D_bubble;
-	wire 					E_stall;
-	wire 					E_bubble;
-	wire 					M_stall;
-	wire 					M_bubble;
+	wire 					PC_vaild;
+	wire					fetch_vaild;
+	wire					decode_vaild;
+	wire					execute_vaild;
+	wire					memory_vaild;
+
+	wire					PC_ready;
+	wire 					fetch_ready;
+	wire					decode_ready;
+	wire					execute_ready;
+	wire					memory_ready;
+
+	wire					fetch_allow_in;
+	wire					decode_allow_in;
+	wire					execute_allow_in;
+	wire					memory_allow_in;
+	wire					write_back_allow_in;
 	//********************************
 	//control
 	//********************************
@@ -196,44 +203,27 @@ module CPU(
 	//write_back
 	//********************************
 	wire [`XLEN - 1:0]       		W_data;
-	//********************************
-	//hazard_control
-	//********************************
-	hazard_control hazard_control(
-		.D_epcode_i			(D_epcode		),
-		.DD_epcode_i			(DD_epcode		),
-		.D_rs1_i			(D_rs1			),
-		.D_rs2_i			(D_rs2			),
-		.DD_dstE_i			(DD_dstE		),
-		.DD_need_dstE_i			(DD_need_dstE		),
-		.D_train_taken_i		(D_train_taken		),
-
-		.PC_stall_o			(PC_stall		),
-		.PC_bubble_o			(PC_stall		),
-		.F_stall_o			(F_stall		),
-		.F_bubble_o			(F_bubble		),
-		.D_stall_o			(D_stall		),
-		.D_bubble_o			(D_bubble		),
-		.E_stall_o			(E_stall		),
-		.E_bubble_o			(E_bubble		),
-		.M_stall_o			(M_stall		),
-		.M_bubble_o			(M_bubble		)
-	);
-	//********************************
-	//hazard_control
-	//********************************
 	
 	//********************************
 	//fetch
+	//********************************
+
+	//********************************
+	//control
+	//********************************
+	assign PC_ready = 1'b1;
+	//********************************
+	//control
 	//********************************
 	PC_reg PC(
 		//in
 		.rst				(rst			),
 		.clk_i				(clk			),
-		.PC_bubble_i			(PC_bubble		),
-		.PC_stall_i			(PC_stall		),
 		.nPC_i				(nPC			),
+		.fetch_allow_in_i	(fetch_allow_in	),
+		.PC_ready_i			(PC_ready		),
 		//out
+		.PC_vaild_o			(PC_vaild		),
 		.F_PC_o				(F_PC			)
 	);
 	PC_sel PC_sel(
@@ -301,12 +291,21 @@ module CPU(
 		.nPC_o				(nPC			),
 		.F_success_hit_o	(F_success_hit	)
 	);
+	//********************************
+	//control
+	//********************************
+	wire D_branch = D_epcode[`op_branch];
+	wire D_jalr = D_epcode[`op_jalr];
+	wire fetch_control = ((D_branch & (~D_train_taken)) | D_jalr) ? decode_allow_in ? 1'b0 : PC_vaild : PC_vaild;
+	assign fetch_allow_in = fetch_ready & decode_allow_in;
+	assign fetch_ready = 1'b1;
+	//********************************
+	//control
+	//********************************
 	fetch_reg fetch_reg(
 		//input
 		.rst				(rst			),
 		.clk_i				(clk			),
-		.F_stall_i			(F_stall		),
-		.F_bubble_i			(F_bubble		),
 		.instr_i			(instr			),
 		.F_PC_i				(F_sel_PC		),
 		.F_nPC_i			(nPC			),
@@ -314,15 +313,19 @@ module CPU(
 		.F_train_predict_i		(F_train_predict	),
 		.F_train_vaild_i		(F_train_vaild		),
 		.F_train_global_history_i	(F_train_global_history	),
-    		.F_train_local_predict_i	(F_train_local_predict	),
-    		.F_train_global_predict_i	(F_train_global_predict	),
-			.F_success_hit_i			(F_success_hit			),
-			.F_jal_i					(mini_op_jal			),
+    	.F_train_local_predict_i	(F_train_local_predict	),
+    	.F_train_global_predict_i	(F_train_global_predict	),
+		.F_success_hit_i			(F_success_hit			),
+		.F_jal_i					(mini_op_jal			),
+		.fetch_control_i			(fetch_control			),
+		.fetch_ready_i				(fetch_ready			),
+		.decode_allow_in_i			(decode_allow_in		),
 		//output
-			.FD_jal_o					(FD_jal					),
-			.FD_success_hit_o			(FD_success_hit			),
-    		.FD_train_local_predict_o	(FD_train_local_predict	),
-    		.FD_train_global_predict_o	(FD_train_global_predict),
+		.fetch_vaild_o				(fetch_vaild			),
+		.FD_jal_o					(FD_jal					),
+		.FD_success_hit_o			(FD_success_hit			),
+    	.FD_train_local_predict_o	(FD_train_local_predict	),
+    	.FD_train_global_predict_o	(FD_train_global_predict),
 		.FD_train_global_history_o	(FD_train_global_history),
 		.FD_train_predict_o		(FD_train_predict	),
 		.FD_train_vaild_o		(FD_train_vaild		),
@@ -368,7 +371,7 @@ module CPU(
 		.MD_need_dstE_i			(MD_need_dstE		),
 		.MD_dstE_i			(MD_dstE		),
 		.data_i				(W_data			),
-
+		.memory_vaild_i		(memory_vaild	),
 		//out
 		.D_rs1_data_o			(D_rs1_data		),
 		.D_rs2_data_o			(D_rs2_data		)
@@ -417,12 +420,20 @@ module CPU(
 		.D_train_taken_o			(D_train_taken			),
 		.D_op_jalr_o				(D_op_jalr				)
 	);
+	//********************************
+	//control
+	//********************************
+	wire DD_op_load = DD_epcode[`op_load];
+	wire decode_control = ((DD_op_load) & (D_rs1 == DD_dstE | D_rs2 == DD_dstE) & DD_need_dstE) ? 1'b0 : fetch_vaild;
+	assign decode_ready = ~((DD_op_load) & (D_rs1 == DD_dstE | D_rs2 == DD_dstE) & DD_need_dstE);
+	assign decode_allow_in = execute_allow_in & decode_ready;
+	//********************************
+	//control
+	//********************************
 	decode_reg decode_reg(
 		//input
 		.rst				(rst			),
 		.clk_i				(clk			),
-		.D_bubble_i			(D_bubble		),
-		.D_stall_i			(D_stall		),
 		.D_epcode_i			(D_epcode		),
 		.D_store_op_i			(D_store_op		),
 		.D_load_op_i			(D_load_op		),
@@ -450,7 +461,11 @@ module CPU(
     	.D_train_global_taken_i		(D_train_global_taken	),
 		.D_jmp_i					(D_jmp					),
 		.D_op_jalr_i				(D_op_jalr				),
+		.decode_control_i			(decode_control			),
+		.decode_ready_i				(decode_ready			),
+		.execute_allow_in_i			(execute_allow_in		),
 		//output
+		.decode_vaild_o				(decode_vaild			),
 		.DD_jmp_o					(DD_jmp					),
 		.DD_op_jalr_o				(DD_op_jalr				),
 		.DD_train_taken_o			(DD_train_taken			),
@@ -498,6 +513,14 @@ module CPU(
 		//out
 		.E_valE_o			(E_valE			)
 	);
+	//********************************
+	//control
+	//********************************
+	assign execute_ready = 1'b1;
+	assign execute_allow_in = 1'b1;
+	//********************************
+	//control
+	//********************************
 	execute_reg execute_reg(
 		//in
 		.rst				(rst			),
@@ -511,8 +534,6 @@ module CPU(
 		.DD_PC_i			(DD_PC			),
 		.DD_commit_i			(DD_commit		),
 		.DD_instr_i			(DD_instr		),
-		.E_bubble_i			(E_bubble		),
-		.E_stall_i			(E_stall		),
 		.DD_nPC_i			(DD_nPC			),
 		.E_valE_i			(E_valE			),
 		.DD_jmp_i			(DD_jmp			),
@@ -521,19 +542,24 @@ module CPU(
 		.DD_train_vaild_i		(DD_train_vaild		),
 		.DD_op_jalr_i			(DD_op_jalr		),
 		.DD_train_global_history_i	(DD_train_global_history),
-    		.DD_train_local_predict_i	(DD_train_local_predict	),
-    		.DD_train_global_predict_i	(DD_train_global_predict),
-    		.DD_train_local_taken_i		(DD_train_local_taken	),
-    		.DD_train_global_taken_i		(DD_train_global_taken	),
-			.DD_success_hit_i			(DD_success_hit			),
-			.DD_jal_i					(DD_jal					),
+    	.DD_train_local_predict_i	(DD_train_local_predict	),
+    	.DD_train_global_predict_i	(DD_train_global_predict),
+    	.DD_train_local_taken_i		(DD_train_local_taken	),
+    	.DD_train_global_taken_i		(DD_train_global_taken	),
+		.DD_success_hit_i			(DD_success_hit			),
+		.DD_jal_i					(DD_jal					),
+
+		.decode_vaild_i				(decode_vaild			),
+		.execute_ready_i			(execute_ready			),
+		.memory_allow_in_i			(memory_allow_in		),
 		//output
-			.ED_jal_o					(ED_jal					),
-			.ED_success_hit_o			(ED_success_hit			),
+		.execute_vaild_o			(execute_vaild			),
+		.ED_jal_o					(ED_jal					),
+		.ED_success_hit_o			(ED_success_hit			),
 		.ED_train_local_taken_o		(ED_train_local_taken	),
 		.ED_train_global_taken_o	(ED_train_global_taken	),
-    		.ED_train_local_predict_o	(ED_train_local_predict	),
-    		.ED_train_global_predict_o	(ED_train_global_predict),
+    	.ED_train_local_predict_o	(ED_train_local_predict	),
+    	.ED_train_global_predict_o	(ED_train_global_predict),
 		.ED_train_global_history_o	(ED_train_global_history),
 		.ED_op_jalr_o			(ED_op_jalr		),
 		.ED_instr_o			(ED_instr		),
@@ -553,6 +579,15 @@ module CPU(
 		.ED_valE_o			(ED_valE		)
 	);
 	//********************************
+	//control
+	//********************************
+	assign memory_ready = 1'b1;
+	assign memory_allow_in = 1'b1;
+	//********************************
+	//control
+	//********************************
+
+	//********************************
 	//execute
 	//********************************
 	memory memory(
@@ -562,6 +597,7 @@ module CPU(
 		.ED_load_op_i			(ED_load_op		),
 		.ED_valE_i			(ED_valE		),
 		.ED_rs2_data_i			(ED_rs2_data		),
+		.execute_vaild_i		(execute_vaild		),
 		//output
 		.M_valM_o			(M_valM			)
 	);
@@ -569,8 +605,6 @@ module CPU(
 		//input
 		.rst				(rst			),
 		.clk_i				(clk			),
-		.M_bubble_i			(M_bubble		),
-		.M_stall_i			(M_stall		),
 		.ED_sel_reg_i			(ED_sel_reg		),
 		.ED_valE_i			(ED_valE		),
 		.M_valM_i			(M_valM			),
@@ -584,19 +618,23 @@ module CPU(
 		.ED_train_predict_i		(ED_train_predict	),
 		.ED_train_vaild_i		(ED_train_vaild		),
 		.ED_train_global_history_i	(ED_train_global_history),
-    		.ED_train_local_predict_i	(ED_train_local_predict	),
-    		.ED_train_global_predict_i	(ED_train_global_predict),
-    		.ED_train_local_taken_i		(ED_train_local_taken	),
-    		.ED_train_global_taken_i	(ED_train_global_taken	),
-			.ED_success_hit_i			(ED_success_hit			),
-			.ED_jal_i					(ED_jal					),
+    	.ED_train_local_predict_i	(ED_train_local_predict	),
+    	.ED_train_global_predict_i	(ED_train_global_predict),
+    	.ED_train_local_taken_i		(ED_train_local_taken	),
+    	.ED_train_global_taken_i	(ED_train_global_taken	),
+		.ED_success_hit_i			(ED_success_hit			),
+		.ED_jal_i					(ED_jal					),
+		.execute_vaild_i				(execute_vaild			),
+		.memory_ready_i			(memory_ready			),
+		.write_back_allow_in_i	(write_back_allow_in	),
 		//output
-			.MD_jal_o					(MD_jal					),
-			.MD_success_hit_o			(MD_success_hit			),
+		.memory_vaild_o				(memory_vaild			),
+		.MD_jal_o					(MD_jal					),
+		.MD_success_hit_o			(MD_success_hit			),
 		.MD_train_local_taken_o		(MD_train_local_taken	),
 		.MD_train_global_taken_o	(MD_train_global_taken	),
-    		.MD_train_local_predict_o	(MD_train_local_predict	),
-    		.MD_train_global_predict_o	(MD_train_global_predict),
+    	.MD_train_local_predict_o	(MD_train_local_predict	),
+    	.MD_train_global_predict_o	(MD_train_global_predict),
 		.MD_train_global_history_o	(MD_train_global_history),
 		.MD_instr_o			(MD_instr		),
 		.MD_train_taken_o		(MD_train_taken		),
@@ -623,6 +661,13 @@ module CPU(
 		//output
 		.W_data_o			(W_data			)
 	);
+	//********************************
+	//control
+	//********************************
+	assign write_back_allow_in = 1'b1;
+	//********************************
+	//control
+	//********************************
 	assign commit_pc 	= MD_PC;
 	assign commit_pre_pc 	= MD_nPC;
 	assign commit 		= MD_commit;

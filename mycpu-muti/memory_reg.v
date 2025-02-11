@@ -3,8 +3,6 @@ module memory_reg(
 	//input
 	input wire			rst,
 	input wire			clk_i,
-	input wire 			M_bubble_i,
-	input wire			M_stall_i,
 	input wire			ED_sel_reg_i,
 	input wire [`XLEN - 1:0]	ED_valE_i,
 	input wire [`XLEN - 1:0]	M_valM_i,
@@ -24,7 +22,11 @@ module memory_reg(
 	input wire				ED_train_local_taken_i,
 	input wire				ED_success_hit_i,
 	input wire				ED_jal_i,
+	input wire				execute_vaild_i,
+	input wire				memory_ready_i,
+	input wire				write_back_allow_in_i,
 	//output
+	output reg				memory_vaild_o,
 	output reg				MD_jal_o,
 	output reg				MD_train_local_predict_o,
 	output reg				MD_train_global_predict_o,
@@ -46,7 +48,7 @@ module memory_reg(
 	output reg 			MD_commit_o
 );
 	always @(posedge clk_i) begin
-		if(M_bubble_i | rst)begin
+		if(rst | ~execute_vaild_i)begin
 			MD_sel_reg_o 		<= 0;
 			MD_valM_o		<= 0;
 			MD_valE_o		<= 0;
@@ -67,7 +69,8 @@ module memory_reg(
 			MD_success_hit_o		<= 0;
 			MD_jal_o				<= 0;
 		end
-		else if(~M_stall_i)begin
+		else if(memory_ready_i & write_back_allow_in_i)begin
+			memory_vaild_o		<= execute_vaild_i;
 			MD_sel_reg_o 		<= ED_sel_reg_i;
 			MD_valM_o		<= M_valM_i;
 			MD_valE_o		<= ED_valE_i;

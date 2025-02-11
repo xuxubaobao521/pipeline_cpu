@@ -3,8 +3,6 @@ module fetch_reg(
 	//input
 	input wire				rst,
 	input wire				clk_i,
-	input wire				F_bubble_i,
-	input wire				F_stall_i,
 	input wire[`INSTR_WIDTH - 1:0]		instr_i,
 	input wire[`PC_WIDTH - 1:0]		F_PC_i,
 	input wire[`PC_WIDTH - 1:0]		F_nPC_i,
@@ -16,7 +14,11 @@ module fetch_reg(
 	input wire				F_train_local_predict_i,
 	input wire				F_success_hit_i,
 	input wire				F_jal_i,
+	input wire				fetch_control_i,
+	input wire				decode_allow_in_i,
+	input wire				fetch_ready_i,
 	//output
+	output reg				fetch_vaild_o,
 	output reg				FD_jal_o,
 	output reg				FD_success_hit_o,
 	output reg				FD_train_local_predict_o,
@@ -30,7 +32,7 @@ module fetch_reg(
 	output reg				FD_commit_o
 );
 	always @(posedge clk_i) begin
-		if(F_bubble_i | rst) begin
+		if(rst | ~fetch_control_i) begin
 			FD_instr_o			<=`nop_instr;
 			FD_PC_o				<=`nop_PC;
 			FD_nPC_o			<=`nop_nPC;
@@ -42,8 +44,10 @@ module fetch_reg(
 			FD_train_local_predict_o	<= 0;
 			FD_success_hit_o			<= 0;
 			FD_jal_o					<= 0;
+			fetch_vaild_o				<= 0;
 		end
-		else if(~F_stall_i)begin
+		else if(decode_allow_in_i & fetch_ready_i)begin
+			fetch_vaild_o			<= fetch_control_i;
 			FD_instr_o				<=instr_i;
 			FD_PC_o					<=F_PC_i;
 			FD_nPC_o				<=F_nPC_i;
