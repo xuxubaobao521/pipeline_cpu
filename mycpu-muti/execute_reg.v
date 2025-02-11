@@ -11,20 +11,20 @@ module execute_reg(
 	input wire                       	DD_need_dstE_i,
 	input wire [4:0]                 	DD_dstE_i,
 	input wire [`PC_WIDTH - 1:0]		DD_PC_i,
-	input wire [`PC_WIDTH - 1:0]		E_nPC_i,
+	input wire [`PC_WIDTH - 1:0]		DD_nPC_i,
 	input wire 				DD_commit_i,
 	input wire [`XLEN - 1:0]		E_valE_i,
-	input wire [`PC_WIDTH - 1:0]    	E_jmp_i,
-	input wire				E_train_taken_i,
-	input wire				E_train_global_taken_i,
-	input wire				E_train_local_taken_i,
+	input wire [`PC_WIDTH - 1:0]    	DD_jmp_i,
+	input wire				DD_train_taken_i,
+	input wire				DD_train_global_taken_i,
+	input wire				DD_train_local_taken_i,
 	input wire [`INSTR_WIDTH - 1:0]		DD_instr_i,
 	input wire				DD_train_predict_i,
 	input wire 				DD_train_vaild_i,
 	input wire [`history_WIDTH - 1:0] 	DD_train_global_history_i,
 	input wire 				DD_train_global_predict_i,
 	input wire				DD_train_local_predict_i,
-	input wire				E_op_jalr_i,
+	input wire				DD_op_jalr_i,
 	input wire				DD_success_hit_i,
 	input wire				DD_jal_i,
 	
@@ -87,21 +87,21 @@ module execute_reg(
 			ED_valE_o	<= E_valE_i;
 			ED_need_dstE_o	<= DD_need_dstE_i;
 			ED_dstE_o	<= DD_dstE_i;
-			ED_jmp_o	<= E_jmp_i;
+			ED_jmp_o	<= DD_jmp_i;
 			ED_PC_o		<= DD_PC_i;
-			ED_nPC_o	<= E_nPC_i;
+			ED_nPC_o	<= DD_nPC_i;
 			ED_commit_o	<= DD_commit_i;
 			ED_instr_o	<= DD_instr_i;
-			ED_op_jalr_o		<=E_op_jalr_i;
+			ED_op_jalr_o		<=DD_op_jalr_i;
 			
 			ED_train_vaild_o		<=DD_train_vaild_i;
 			ED_train_predict_o		<=DD_train_predict_i;
 			ED_train_global_history_o	<= DD_train_global_history_i;
 			ED_train_global_predict_o	<= DD_train_global_predict_i;
 			ED_train_local_predict_o	<= DD_train_local_predict_i;
-			ED_train_taken_o		<= E_train_taken_i;
-			ED_train_global_taken_o 	<= E_train_global_taken_i;
-			ED_train_local_taken_o 		<= E_train_local_taken_i;
+			ED_train_taken_o			<= DD_train_taken_i;
+			ED_train_global_taken_o 	<= DD_train_global_taken_i;
+			ED_train_local_taken_o 		<= DD_train_local_taken_i;
 			ED_success_hit_o			<= DD_success_hit_i;
 			ED_jal_o					<= DD_jal_i;
 		end

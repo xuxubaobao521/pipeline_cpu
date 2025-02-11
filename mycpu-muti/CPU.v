@@ -97,6 +97,13 @@ module CPU(
 	wire [`XLEN - 1:0] 			D_rs1_data;
 	wire [`XLEN - 1:0] 			D_rs2_data;
 	
+	wire [`XLEN - 1:0]				D_jmp;
+	wire 							D_train_taken;
+	wire							D_train_local_taken;
+	wire							D_train_global_taken;
+	wire [`PC_WIDTH - 1:0]  		D_nPC;
+	wire 							D_op_jalr;
+
 	wire [`XLEN - 1:0] 			D_fwdA;
 	wire [`XLEN - 1:0] 			D_fwdB;
 	//********************************
@@ -124,16 +131,15 @@ module CPU(
 	wire					DD_train_global_predict;
 	wire					DD_success_hit;
 	wire					DD_jal;
+	wire					DD_op_jalr;
+	wire [`PC_WIDTH - 1:0]  DD_jmp;
+	wire					DD_train_local_taken;
+	wire					DD_train_global_taken;
+	wire					DD_train_taken;
 	//********************************
 	//execute
 	//********************************
 	wire [`XLEN - 1:0]			E_valE;
-	wire [`XLEN - 1:0]			E_jmp;
-	wire 					E_train_taken;
-	wire					E_train_local_taken;
-	wire					E_train_global_taken;
-	wire [`PC_WIDTH - 1:0]  		E_nPC;
-	wire 					E_op_jalr;
 	//********************************
 	//execute reg
 	//********************************
@@ -200,7 +206,7 @@ module CPU(
 		.D_rs2_i			(D_rs2			),
 		.DD_dstE_i			(DD_dstE		),
 		.DD_need_dstE_i			(DD_need_dstE		),
-		.E_train_taken_i		(E_train_taken		),
+		.D_train_taken_i		(D_train_taken		),
 
 		.PC_stall_o			(PC_stall		),
 		.PC_bubble_o			(PC_stall		),
@@ -232,10 +238,10 @@ module CPU(
 	);
 	PC_sel PC_sel(
 		//in
-		.ED_op_jalr_i			(ED_op_jalr		),
-		.ED_train_vaild_i		(ED_train_vaild		),
-		.ED_train_taken_i		(ED_train_taken		),
-		.ED_jmp_i			(ED_jmp			),
+		.ED_op_jalr_i			(DD_op_jalr		),
+		.ED_train_vaild_i		(DD_train_vaild		),
+		.ED_train_taken_i		(DD_train_taken		),
+		.ED_jmp_i			(DD_jmp			),
 		//out
 		.F_PC_i				(F_PC			),
 		.F_sel_PC_o			(F_sel_PC		)
@@ -362,9 +368,11 @@ module CPU(
 		.MD_need_dstE_i			(MD_need_dstE		),
 		.MD_dstE_i			(MD_dstE		),
 		.data_i				(W_data			),
+
 		//out
 		.D_rs1_data_o			(D_rs1_data		),
 		.D_rs2_data_o			(D_rs2_data		)
+
 	);
 	fwd fwd(
 		.D_rs1_i			(D_rs1			),
@@ -390,6 +398,25 @@ module CPU(
 		.D_fwdA_o(D_fwdA),
 		.D_fwdB_o(D_fwdB)
 	);
+	branch_unit branch_unit(
+		.D_fwdA_i					(D_fwdA		),
+		.D_fwdB_i					(D_fwdB		),
+		.FD_epcode_i				(D_epcode		),
+		.FD_branch_op_i				(D_branch_op		),
+		.FD_imme_i					(D_imme		),
+		.FD_PC_i					(FD_PC			),
+		.FD_nPC_i					(FD_nPC			),
+		.FD_train_predict_i			(FD_train_predict	),
+    	.FD_train_local_predict_i	(FD_train_local_predict	),
+    	.FD_train_global_predict_i	(FD_train_global_predict),
+
+		.D_jmp_o					(D_jmp					),
+		.D_nPC_o					(D_nPC					),
+		.D_train_local_taken_o		(D_train_local_taken	),
+		.D_train_global_taken_o		(D_train_global_taken	),
+		.D_train_taken_o			(D_train_taken			),
+		.D_op_jalr_o				(D_op_jalr				)
+	);
 	decode_reg decode_reg(
 		//input
 		.rst				(rst			),
@@ -403,7 +430,7 @@ module CPU(
 		.D_ALU_op_i			(D_ALU_op		),
 		.D_sel_reg_i			(D_sel_reg		),
 		.D_PC_i				(FD_PC			),
-		.D_nPC_i			(FD_nPC			),
+		.D_nPC_i			(D_nPC			),
 		.D_commit_i			(FD_commit		),
 		.D_need_dstE_i			(D_need_dstE		),
 		.D_dstE_i			(D_dstE			),
@@ -414,15 +441,25 @@ module CPU(
 		.D_train_predict_i		(FD_train_predict	),
 		.D_train_vaild_i		(FD_train_vaild		),
 		.D_train_global_history_i	(FD_train_global_history),
-    		.D_train_local_predict_i	(FD_train_local_predict	),
-    		.D_train_global_predict_i	(FD_train_global_predict),
-			.D_success_hit_i			(FD_success_hit			),
-			.D_jal_i					(FD_jal					),
+    	.D_train_local_predict_i	(FD_train_local_predict	),
+    	.D_train_global_predict_i	(FD_train_global_predict),
+		.D_success_hit_i			(FD_success_hit			),
+		.D_jal_i					(FD_jal					),
+		.D_train_taken_i			(D_train_taken			),
+		.D_train_local_taken_i		(D_train_local_taken	),
+    	.D_train_global_taken_i		(D_train_global_taken	),
+		.D_jmp_i					(D_jmp					),
+		.D_op_jalr_i				(D_op_jalr				),
 		//output
-			.DD_jal_o					(DD_jal					),
-			.DD_success_hit_o			(DD_success_hit			),
-    		.DD_train_local_predict_o	(DD_train_local_predict	),
-    		.DD_train_global_predict_o	(DD_train_global_predict),
+		.DD_jmp_o					(DD_jmp					),
+		.DD_op_jalr_o				(DD_op_jalr				),
+		.DD_train_taken_o			(DD_train_taken			),
+		.DD_train_local_taken_o		(DD_train_local_taken	),
+    	.DD_train_global_taken_o	(DD_train_global_taken	),
+		.DD_jal_o					(DD_jal					),
+		.DD_success_hit_o			(DD_success_hit			),
+    	.DD_train_local_predict_o	(DD_train_local_predict	),
+    	.DD_train_global_predict_o	(DD_train_global_predict),
 		.DD_train_global_history_o	(DD_train_global_history),
 		.DD_instr_o			(DD_instr		),
 		.DD_train_predict_o		(DD_train_predict	),
@@ -456,20 +493,10 @@ module CPU(
 		.DD_epcode_i			(DD_epcode		),
 		.DD_branch_op_i			(DD_branch_op		),
 		.DD_imme_i			(DD_imme		),
-		.DD_nPC_i			(DD_nPC			),
 		.DD_ALU_op_i			(DD_ALU_op		),
 		.DD_PC_i			(DD_PC			),
-		.DD_train_predict_i		(DD_train_predict	),
-    		.DD_train_local_predict_i	(DD_train_local_predict	),
-    		.DD_train_global_predict_i	(DD_train_global_predict),
 		//out
-		.E_op_jalr_o			(E_op_jalr		),
-		.E_valE_o			(E_valE			),
-		.E_jmp_o			(E_jmp			),
-		.E_nPC_o			(E_nPC			),
-		.E_train_local_taken_o		(E_train_local_taken	),
-		.E_train_global_taken_o		(E_train_global_taken	),
-		.E_train_taken_o		(E_train_taken		)
+		.E_valE_o			(E_valE			)
 	);
 	execute_reg execute_reg(
 		//in
@@ -486,18 +513,18 @@ module CPU(
 		.DD_instr_i			(DD_instr		),
 		.E_bubble_i			(E_bubble		),
 		.E_stall_i			(E_stall		),
-		.E_nPC_i			(E_nPC			),
+		.DD_nPC_i			(DD_nPC			),
 		.E_valE_i			(E_valE			),
-		.E_jmp_i			(E_jmp			),
-		.E_train_taken_i		(E_train_taken		),
+		.DD_jmp_i			(DD_jmp			),
+		.DD_train_taken_i		(DD_train_taken		),
 		.DD_train_predict_i		(DD_train_predict	),
 		.DD_train_vaild_i		(DD_train_vaild		),
-		.E_op_jalr_i			(E_op_jalr		),
+		.DD_op_jalr_i			(DD_op_jalr		),
 		.DD_train_global_history_i	(DD_train_global_history),
     		.DD_train_local_predict_i	(DD_train_local_predict	),
     		.DD_train_global_predict_i	(DD_train_global_predict),
-    		.E_train_local_taken_i		(E_train_local_taken	),
-    		.E_train_global_taken_i		(E_train_global_taken	),
+    		.DD_train_local_taken_i		(DD_train_local_taken	),
+    		.DD_train_global_taken_i		(DD_train_global_taken	),
 			.DD_success_hit_i			(DD_success_hit			),
 			.DD_jal_i					(DD_jal					),
 		//output
