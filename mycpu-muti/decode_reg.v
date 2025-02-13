@@ -124,5 +124,35 @@ module decode_reg(
 			DD_jmp_o					<= D_jmp_i;
 			DD_op_jalr_o				<= D_op_jalr_i;
 		end
+		else if(~decode_ready_i) begin
+			decode_vaild_o	<=0;
+			DD_epcode_o 	<=0;
+			DD_store_op_o	<=0;
+			DD_load_op_o	<=0;
+			DD_branch_op_o	<=0;
+			DD_ALU_op_o	<=0;
+			DD_sel_reg_o	<=0;
+			DD_need_dstE_o	<=0;
+			DD_dstE_o	<=0;
+			DD_rs1_data_o	<=0;
+			DD_rs2_data_o	<=0;
+			DD_imme_o	<=0;
+			DD_PC_o		<=`nop_PC;
+			DD_nPC_o	<=`nop_nPC;
+			DD_commit_o	<=`nop_commit;
+			DD_instr_o	<=`nop_instr;
+			DD_train_vaild_o	<= 0;
+			DD_train_predict_o	<= 0;
+			DD_train_global_history_o	<= 0;
+			DD_train_global_predict_o	<= 0;
+			DD_train_local_predict_o	<= 0;
+			DD_success_hit_o			<= 0;
+			DD_jal_o					<= 0;
+			DD_train_taken_o			<= 0;
+			DD_train_global_taken_o 	<= 0;
+			DD_train_local_taken_o 		<= 0;
+			DD_jmp_o					<= 0;
+			DD_op_jalr_o				<= 0;
+		end
 	end
 endmodule

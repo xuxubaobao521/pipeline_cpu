@@ -35,6 +35,14 @@ module execute(
 	wire alu_sra = DD_ALU_op_i[`alu_sra];
 	wire alu_or = DD_ALU_op_i[`alu_or];
 	wire alu_and = DD_ALU_op_i[`alu_and];
+	wire alu_mul = DD_ALU_op_i[`alu_mul];
+	wire alu_mulh = DD_ALU_op_i[`alu_mulh];
+	wire alu_mulhu = DD_ALU_op_i[`alu_mulhu];
+	wire alu_mulhsu = DD_ALU_op_i[`alu_mulhsu];
+	wire alu_div = DD_ALU_op_i[`alu_div];
+	wire alu_divu = DD_ALU_op_i[`alu_divu];
+	wire alu_rem = DD_ALU_op_i[`alu_rem];
+	wire alu_remu = DD_ALU_op_i[`alu_remu];
 	//BRANCH OP
 	wire branch_eq = DD_branch_op_i[`branch_eq];
 	wire branch_ne = DD_branch_op_i[`branch_ne];
@@ -68,6 +76,12 @@ module execute(
 	wire sel_sra = alu_sra;
 	wire sel_or = alu_or;
 	wire sel_and = alu_and;
+	wire sel_mul = alu_mul;
+	wire sel_mulh = alu_mulh | alu_mulhsu | alu_mulhu;
+	wire sel_div = alu_div;
+	wire sel_divu = alu_divu;
+	wire sel_rem = alu_rem;
+	wire sel_remu = alu_remu;
 	//res
 	wire [`XLEN - 1:0] res_add_sub;
 	wire [`XLEN - 1:0] res_sll;
@@ -104,14 +118,54 @@ module execute(
 	assign res_and = OP1 & OP2;
 	//or
 	assign res_or = OP1 | OP2;
+	//mul
+	wire [`XLEN:0] smul_OP1 = {OP1[`XLEN - 1], OP1};
+	wire [`XLEN:0] smul_OP2 = {OP2[`XLEN - 1], OP2};
+	
+	wire [`XLEN:0] umul_OP1 = {1'b0, OP1};
+	wire [`XLEN:0] umul_OP2 = {1'b0, OP2};
+
+	wire [`XLEN:0] mul_OP1 = alu_mul | alu_mulh | alu_mulhsu ? smul_OP1 : umul_OP1;
+	wire [`XLEN:0] mul_OP2 = alu_mul | alu_mulh ? smul_OP2 : umul_OP2;
+
+	//wire [`XLEN * 2 + 1:0]res_mul = $signed(mul_OP1) * $signed(mul_OP2);
+	wire [`XLEN * 2 + 1:0] res_mul;
+	mul mul(
+		.x(mul_OP1),
+		.y(mul_OP2),
+
+		.z(res_mul)
+	);
+	//div
+	wire sign_rem = OP1[`XLEN - 1];
+	wire sign_div = OP1[`XLEN - 1] ^ OP2[`XLEN - 1];
+	wire [`XLEN - 1:0]div_OP1 =  OP1[`XLEN - 1] ? (~OP1) + 1 : OP1;
+	wire [`XLEN - 1:0]div_OP2 =  OP2[`XLEN - 1] ? (~OP2) + 1 : OP2;
+	wire [`XLEN - 1:0]divu_num = div_OP1 / div_OP2;
+	wire [`XLEN - 1:0]remu_num = div_OP1 % div_OP2;
+	wire [`XLEN - 1:0]div_num = sign_div ? (~divu_num) + 1 : divu_num;
+	wire [`XLEN - 1:0]rem_num = sign_rem ? (~remu_num) + 1 : remu_num;
+
+
+	wire [`XLEN - 1:0]res_div = |OP2 ? (OP1 == {1'b1,31'b0}) & (&OP2) ? OP1 : div_num : {`XLEN{1'b1}};
+	wire [`XLEN - 1:0]res_divu = |OP2 ? OP1 / OP2 : {`XLEN{1'b1}};
+	//rem
+	wire [`XLEN - 1:0]res_rem = |OP2 ? (OP1 == {1'b1,31'b0}) & (&OP2) ? 32'b0 : rem_num : OP1;
+	wire [`XLEN - 1:0]res_remu =  |OP2 ? OP1 % OP2 : OP1;
 	wire [`XLEN - 1:0] res = 
 									({`XLEN{sel_slt}} & res_slt ) | 
-									({`XLEN{sel_sltu}} & res_sltu ) |
-									({`XLEN{sel_add | sel_sub}} & res_add_sub ) |
+									({`XLEN{sel_sltu}} & res_sltu ) | 
+									({`XLEN{sel_add | sel_sub}} & res_add_sub ) | 
 									({`XLEN{sel_sll}} & res_sll ) | 
-									({`XLEN{sel_xor}} & res_xor ) |
+									({`XLEN{sel_xor}} & res_xor ) | 
 									({`XLEN{sel_srl}} & res_srl ) | 
 									({`XLEN{sel_sra}} & res_sra ) | 
+									({`XLEN{sel_mul}} & res_mul[`XLEN - 1:0] ) | 
+									({`XLEN{sel_mulh}} & res_mul[`XLEN * 2 - 1:`XLEN] ) | 
+									({`XLEN{sel_div}} & res_div ) | 
+									({`XLEN{sel_divu}} & res_divu ) | 
+									({`XLEN{sel_rem}} & res_rem ) | 
+									({`XLEN{sel_remu}} & res_remu ) | 
 									({`XLEN{sel_or}} & res_or ) | 
 									({`XLEN{sel_and}} & res_and );
 

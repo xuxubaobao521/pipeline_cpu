@@ -49,6 +49,7 @@ module memory_reg(
 );
 	always @(posedge clk_i) begin
 		if(rst | ~execute_vaild_i)begin
+			memory_vaild_o		<= 0;
 			MD_sel_reg_o 		<= 0;
 			MD_valM_o		<= 0;
 			MD_valE_o		<= 0;

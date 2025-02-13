@@ -424,9 +424,9 @@ module CPU(
 	//control
 	//********************************
 	wire DD_op_load = DD_epcode[`op_load];
-	wire decode_control = ((DD_op_load) & (D_rs1 == DD_dstE | D_rs2 == DD_dstE) & DD_need_dstE) ? 1'b0 : fetch_vaild;
-	assign decode_ready = ~((DD_op_load) & (D_rs1 == DD_dstE | D_rs2 == DD_dstE) & DD_need_dstE);
-	assign decode_allow_in = execute_allow_in & decode_ready;
+	wire decode_control = fetch_vaild;
+	assign decode_ready = ~((DD_op_load) & (D_rs1 == DD_dstE | D_rs2 == DD_dstE) & DD_need_dstE & decode_vaild) | (~fetch_vaild);
+	assign decode_allow_in = (execute_allow_in & decode_ready) | (~decode_vaild);
 	//********************************
 	//control
 	//********************************
@@ -624,9 +624,9 @@ module CPU(
     	.ED_train_global_taken_i	(ED_train_global_taken	),
 		.ED_success_hit_i			(ED_success_hit			),
 		.ED_jal_i					(ED_jal					),
-		.execute_vaild_i				(execute_vaild			),
-		.memory_ready_i			(memory_ready			),
-		.write_back_allow_in_i	(write_back_allow_in	),
+		.execute_vaild_i			(execute_vaild			),
+		.memory_ready_i				(memory_ready			),
+		.write_back_allow_in_i		(write_back_allow_in	),
 		//output
 		.memory_vaild_o				(memory_vaild			),
 		.MD_jal_o					(MD_jal					),
@@ -670,7 +670,7 @@ module CPU(
 	//********************************
 	assign commit_pc 	= MD_PC;
 	assign commit_pre_pc 	= MD_nPC;
-	assign commit 		= MD_commit;
+	assign commit 		= MD_commit & memory_vaild;
 	assign commit_branch = MD_train_vaild;
 	assign commit_taken = MD_train_taken & MD_train_vaild;
 	assign commit_local_taken = MD_train_vaild & MD_train_local_taken;

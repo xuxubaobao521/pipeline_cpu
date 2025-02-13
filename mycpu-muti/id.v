@@ -58,11 +58,11 @@ module id(
 	wire rv_sltiu = (op_alui) & (fun3 == `ALU_sltu);
 	wire rv_xori = (op_alui) & (fun3 == `ALU_xor);
 	wire rv_ori = (op_alui) & (fun3 == `ALU_or);
-	wire rv_andi = (op_alui) & (fun3 == `ALU_and);
+	wire rv_andi = (op_alui) & (fun3 == `ALU_and) ;
 	wire rv_slli = (op_alui) & (fun3 == `ALU_sll) & (fun7 == 7'b0000000);
 	wire rv_srli = (op_alui) & (fun3 == `ALU_srl) & (fun7 == 7'b0000000);
 	wire rv_srai = (op_alui) & (fun3 == `ALU_sra) & (fun7 == 7'b0100000);
-	wire rv_addiw = (op_aluiw) & (fun3 == `ALU_add);
+	wire rv_addiw = (op_aluiw) & (fun3 == `ALU_add) & (fun7 == 7'b0000000);
 	wire rv_slliw = (op_aluiw) & (fun3 == `ALU_sll) & (fun7 == 7'b0000000);
 	wire rv_srliw = (op_aluiw) & (fun3 == `ALU_srl) & (fun7 == 7'b0000000);
 	wire rv_sraiw = (op_aluiw) & (fun3 == `ALU_sra) & (fun7 == 7'b0100000);
@@ -70,19 +70,27 @@ module id(
 	//reg and reg
 	wire rv_add = (op_alur) & (fun3 == `ALU_add) & (fun7 == 7'b0000000);
 	wire rv_sub = (op_alur) & (fun3 == `ALU_sub) & (fun7 == 7'b0100000);
-	wire rv_slt = (op_alur) & (fun3 == `ALU_slt);
-	wire rv_sltu = (op_alur) & (fun3 == `ALU_sltu);
-	wire rv_xor = (op_alur) & (fun3 == `ALU_xor);
-	wire rv_sll = (op_alur) & (fun3 == `ALU_sll);
+	wire rv_slt = (op_alur) & (fun3 == `ALU_slt) & (fun7 == 7'b0000000);
+	wire rv_sltu = (op_alur) & (fun3 == `ALU_sltu) & (fun7 == 7'b0000000);
+	wire rv_xor = (op_alur) & (fun3 == `ALU_xor) & (fun7 == 7'b0000000);
+	wire rv_sll = (op_alur) & (fun3 == `ALU_sll) & (fun7 == 7'b0000000);
 	wire rv_srl = (op_alur) & (fun3 == `ALU_srl) & (fun7 == 7'b0000000);
 	wire rv_sra = (op_alur) & (fun3 == `ALU_sra) & (fun7 == 7'b0100000);
-	wire rv_or = (op_alur) & (fun3 == `ALU_or);
-	wire rv_and = (op_alur) & (fun3 == `ALU_and);
+	wire rv_or = (op_alur) & (fun3 == `ALU_or) & (fun7 == 7'b0000000);
+	wire rv_and = (op_alur) & (fun3 == `ALU_and) & (fun7 == 7'b0000000);
 	wire rv_addw = (op_alurw) & (fun3 == `ALU_add) & (fun7 == 7'b0000000);
 	wire rv_subw = (op_alurw) & (fun3 == `ALU_sub) & (fun7 == 7'b0100000);
-	wire rv_sllw = (op_alur) & (fun3 == `ALU_sll);
+	wire rv_sllw = (op_alur) & (fun3 == `ALU_sll) & (fun7 == 7'b0000000);
 	wire rv_srlw = (op_alur) & (fun3 == `ALU_srl) & (fun7 == 7'b0000000);
 	wire rv_sraw = (op_alur) & (fun3 == `ALU_sra) & (fun7 == 7'b0100000);
+	wire rv_mul = (op_alur) & (fun3 == `ALU_mul) & (fun7 == 7'b0000001);
+	wire rv_mulh = (op_alur) & (fun3 == `ALU_mulh) & (fun7 == 7'b0000001);
+	wire rv_mulhsu = (op_alur) & (fun3 == `ALU_mulhsu) & (fun7 == 7'b0000001);
+	wire rv_mulhu = (op_alur) & (fun3 == `ALU_mulhu) & (fun7 == 7'b0000001);
+	wire rv_div = (op_alur) & (fun3 == `ALU_div) & (fun7 == 7'b0000001);
+	wire rv_divu = (op_alur) & (fun3 == `ALU_divu) & (fun7 == 7'b0000001);
+	wire rv_rem = (op_alur) & (fun3 == `ALU_rem) & (fun7 == 7'b0000001);
+	wire rv_remu = (op_alur) & (fun3 == `ALU_remu) & (fun7 == 7'b0000001);
 	
 	//alu op
 	wire ALU_add = rv_addi | rv_add | rv_addw | rv_addiw;
@@ -95,8 +103,24 @@ module id(
 	wire ALU_sll = rv_sll | rv_slli | rv_slliw | rv_sllw;
 	wire ALU_sra = rv_sra | rv_srai | rv_sraiw | rv_sraw;
 	wire ALU_srl = rv_srl | rv_srli | rv_srliw | rv_srlw;
+	wire ALU_mul = rv_mul;
+	wire ALU_mulh = rv_mulh;
+	wire ALU_mulhu = rv_mulhu;
+	wire ALU_mulhsu = rv_mulhsu;
+	wire ALU_div = rv_div;
+	wire ALU_divu = rv_divu;
+	wire ALU_rem = rv_rem;
+	wire ALU_remu = rv_remu;
 	
 	assign D_ALU_op_o = {
+						ALU_remu,
+						ALU_rem,
+						ALU_divu,
+						ALU_div,
+						ALU_mulhsu,
+						ALU_mulhu,
+						ALU_mulh,
+						ALU_mul,
 						ALU_and,
 						ALU_or,
 						ALU_sra,

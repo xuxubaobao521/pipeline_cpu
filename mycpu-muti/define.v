@@ -40,8 +40,16 @@
 `define ALU_sra 3'b101
 `define ALU_or 3'b110
 `define ALU_and 3'b111
+`define ALU_mul 3'b000
+`define ALU_mulh 3'b001
+`define ALU_mulhsu 3'b010
+`define ALU_mulhu 3'b011
+`define ALU_div 3'b100
+`define ALU_divu 3'b101
+`define ALU_rem 3'b110
+`define ALU_remu 3'b111
 
-`define ALU_WIDTH 10
+`define ALU_WIDTH 18
 `define alu_add 0
 `define alu_sub 1
 `define alu_sll 2
@@ -52,6 +60,14 @@
 `define alu_sra 7
 `define alu_or 8
 `define alu_and 9
+`define alu_mul 10
+`define alu_mulh 11
+`define alu_mulhu 12
+`define alu_mulhsu 13
+`define alu_div 14
+`define alu_divu 15
+`define alu_rem 16
+`define alu_remu 17
 
 //branch操作
 `define eq 3'b000
