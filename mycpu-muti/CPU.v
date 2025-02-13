@@ -147,6 +147,7 @@ module CPU(
 	//execute
 	//********************************
 	wire [`XLEN - 1:0]			E_valE;
+	wire 						E_ready;
 	//********************************
 	//execute reg
 	//********************************
@@ -503,6 +504,8 @@ module CPU(
 	//********************************
 	execute execute(
 		//in
+		.rst					(rst				),
+		.clk_i					(clk				),
 		.DD_rs1_data_i			(DD_rs1_data		),
 		.DD_rs2_data_i			(DD_rs2_data		),
 		.DD_epcode_i			(DD_epcode		),
@@ -511,13 +514,14 @@ module CPU(
 		.DD_ALU_op_i			(DD_ALU_op		),
 		.DD_PC_i			(DD_PC			),
 		//out
-		.E_valE_o			(E_valE			)
+		.E_valE_o			(E_valE			),
+		.E_ready_o			(E_ready		)
 	);
 	//********************************
 	//control
 	//********************************
-	assign execute_ready = 1'b1;
-	assign execute_allow_in = 1'b1;
+	assign execute_ready = E_ready;
+	assign execute_allow_in = execute_ready & memory_allow_in;
 	//********************************
 	//control
 	//********************************

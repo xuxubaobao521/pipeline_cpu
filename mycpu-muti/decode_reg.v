@@ -124,7 +124,7 @@ module decode_reg(
 			DD_jmp_o					<= D_jmp_i;
 			DD_op_jalr_o				<= D_op_jalr_i;
 		end
-		else if(~decode_ready_i) begin
+		else if(~decode_ready_i & execute_allow_in_i) begin
 			decode_vaild_o	<=0;
 			DD_epcode_o 	<=0;
 			DD_store_op_o	<=0;

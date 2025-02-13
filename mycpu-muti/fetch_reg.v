@@ -60,5 +60,19 @@ module fetch_reg(
 			FD_success_hit_o				<=F_success_hit_i;
 			FD_jal_o						<=F_jal_i;
 		end
+		else if(~fetch_ready_i & decode_allow_in_i) begin
+			FD_instr_o			<=`nop_instr;
+			FD_PC_o				<=`nop_PC;
+			FD_nPC_o			<=`nop_nPC;
+			FD_commit_o 			<=`nop_commit;
+			FD_train_predict_o		<= 0;
+			FD_train_vaild_o		<= 0;
+			FD_train_global_history_o	<= 0;
+			FD_train_global_predict_o	<= 0;
+			FD_train_local_predict_o	<= 0;
+			FD_success_hit_o			<= 0;
+			FD_jal_o					<= 0;
+			fetch_vaild_o				<= 0;
+		end
 	end
 endmodule

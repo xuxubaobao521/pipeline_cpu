@@ -109,5 +109,32 @@ module execute_reg(
 			ED_success_hit_o			<= DD_success_hit_i;
 			ED_jal_o					<= DD_jal_i;
 		end
+		else if(~execute_ready_i & memory_allow_in_i) begin
+			execute_vaild_o	<= 0;
+			ED_store_op_o 	<= 0;
+			ED_load_op_o 	<= 0;
+			ED_sel_reg_o	<= 0;
+			ED_rs2_data_o	<= 0;
+			ED_valE_o	<= 0;
+			ED_need_dstE_o 	<= 0;
+			ED_dstE_o	<= 0;
+			ED_jmp_o	<= 0;
+			ED_PC_o		<= `nop_PC;
+			ED_nPC_o	<= `nop_nPC;
+			ED_commit_o	<= `nop_commit;
+			ED_instr_o	<= `nop_instr;
+			ED_op_jalr_o		<= 0;
+			
+			ED_train_vaild_o	<= 0;
+			ED_train_predict_o	<= 0;
+			ED_train_global_history_o	<= 0;
+			ED_train_global_predict_o	<= 0;
+			ED_train_local_predict_o	<= 0;
+			ED_train_taken_o	<= 0;
+			ED_train_global_taken_o <= 0;
+			ED_train_local_taken_o 	<= 0;
+			ED_success_hit_o		<= 0;
+			ED_jal_o				<= 0;
+		end
 	end
 endmodule

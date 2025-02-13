@@ -92,5 +92,27 @@ module memory_reg(
 			MD_success_hit_o		<= ED_success_hit_i;
 			MD_jal_o				<= ED_jal_i;
 		end
+		else if(~memory_ready_i & write_back_allow_in_i) begin
+			memory_vaild_o		<= 0;
+			MD_sel_reg_o 		<= 0;
+			MD_valM_o		<= 0;
+			MD_valE_o		<= 0;
+			MD_need_dstE_o		<= 0;
+			MD_dstE_o		<= 0;
+			MD_PC_o			<= `nop_PC;
+			MD_nPC_o		<= `nop_nPC;
+			MD_commit_o		<= `nop_commit;
+			MD_instr_o		<= `nop_instr;
+			MD_train_taken_o	<= 0;
+			MD_train_vaild_o	<= 0;
+			MD_train_predict_o	<= 0;
+			MD_train_global_history_o	<= 0;
+			MD_train_global_predict_o	<= 0;
+			MD_train_local_predict_o	<= 0;
+			MD_train_global_taken_o <= 0;
+			MD_train_local_taken_o 	<= 0;
+			MD_success_hit_o		<= 0;
+			MD_jal_o				<= 0;
+		end
 	end
 endmodule

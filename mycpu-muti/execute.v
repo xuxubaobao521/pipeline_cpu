@@ -1,6 +1,11 @@
 `include "define.v"
+`define idle 0
+`define busy 1
+
 module execute(
 	//input
+	input wire 						rst,
+	input wire						clk_i,
 	input wire [`XLEN - 1:0] 		DD_rs1_data_i,
 	input wire [`XLEN - 1:0] 		DD_rs2_data_i,
 	input wire [`OP_WIDTH - 1:0]    	DD_epcode_i,
@@ -10,7 +15,8 @@ module execute(
 	input wire [`PC_WIDTH - 1:0]    	DD_PC_i,
 	//output
 	//结果
-	output wire [`XLEN - 1:0]		E_valE_o
+	output wire [`XLEN - 1:0]		E_valE_o,
+	output wire 					E_ready_o
 );
 	//opcode OP
 	wire op_branch = DD_epcode_i[`op_branch];
@@ -136,13 +142,30 @@ module execute(
 
 		.z(res_mul)
 	);
+	wire need_div = sel_div | sel_divu | sel_rem | sel_remu;
 	//div
+	wire state;
+	wire [5:0] cnt;
 	wire sign_rem = OP1[`XLEN - 1];
 	wire sign_div = OP1[`XLEN - 1] ^ OP2[`XLEN - 1];
 	wire [`XLEN - 1:0]div_OP1 =  OP1[`XLEN - 1] ? (~OP1) + 1 : OP1;
 	wire [`XLEN - 1:0]div_OP2 =  OP2[`XLEN - 1] ? (~OP2) + 1 : OP2;
-	wire [`XLEN - 1:0]divu_num = div_OP1 / div_OP2;
-	wire [`XLEN - 1:0]remu_num = div_OP1 % div_OP2;
+	wire [`XLEN - 1:0]divu_num;
+	wire [`XLEN - 1:0]remu_num;
+	div div(
+		.rst(rst),
+		.clk_i(clk_i),
+		.need(need_div),
+		.Dividend_i(div_OP1),
+		.Divisor_i(div_OP2),
+
+		.Q(divu_num),
+		.D(remu_num),
+		.state_o(state),
+		.cnt_o(cnt)
+	);
+	//ready 全看除法
+	assign E_ready_o = (state == `idle & ~need_div) | (state == `busy & ~(|cnt));
 	wire [`XLEN - 1:0]div_num = sign_div ? (~divu_num) + 1 : divu_num;
 	wire [`XLEN - 1:0]rem_num = sign_rem ? (~remu_num) + 1 : remu_num;
 
