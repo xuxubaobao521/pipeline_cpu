@@ -29,6 +29,12 @@ module PC_instr(
 		.D_ALU_op_o(),
 		.D_need_dstE_o(),
 		.D_sel_reg_o(),
+		.D_csr_read_addr_o(),
+		.D_csr_op_o(),
+		.D_csr_addr_o(),
+		.D_need_CSR_o(),
+		.D_csr_ecall_o(),
+		.D_csr_mret_o(),
 		//data
 		.D_rs1_o(),
 		.D_rs2_o(),

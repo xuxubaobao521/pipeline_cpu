@@ -33,7 +33,19 @@ module decode_reg(
 	input wire 				decode_control_i,
 	input wire				decode_ready_i,
 	input wire				execute_allow_in_i,
+	input wire 						D_need_CSR_i,
+	input wire [`CSR_number_WIDTH - 1:0] D_csr_addr_i,
+	input wire [`CSR_WIDTH - 1:0]	  	D_csr_op_i,
+	input wire [`XLEN - 1:0]		D_csr_data_i,
+	input wire 						D_csr_ecall_i,
+	input wire  					D_csr_mret_i,
 	//output
+	output reg 						DD_csr_ecall_o,
+	output reg  					DD_csr_mret_o,
+	output reg [`XLEN - 1:0]		DD_csr_data_o,
+	output reg 						DD_need_CSR_o,
+	output reg [`CSR_number_WIDTH - 1:0] DD_csr_addr_o,
+	output reg [`CSR_WIDTH - 1:0]	  	DD_csr_op_o,
 	output reg						decode_vaild_o,
 	output reg [`PC_WIDTH - 1:0]    DD_jmp_o,
 	output reg						DD_op_jalr_o,
@@ -93,6 +105,12 @@ module decode_reg(
 			DD_train_local_taken_o 		<= 0;
 			DD_jmp_o					<= 0;
 			DD_op_jalr_o				<= 0;
+			DD_csr_op_o					<= 0;
+			DD_need_CSR_o				<= 0;
+			DD_csr_addr_o				<= 0;
+			DD_csr_data_o				<= 0;
+			DD_csr_mret_o				<= 0;
+			DD_csr_ecall_o				<= 0;
 		end
 		else if(decode_ready_i & execute_allow_in_i) begin
 			decode_vaild_o	<=decode_control_i;
@@ -123,6 +141,12 @@ module decode_reg(
 			DD_train_local_taken_o 		<= D_train_local_taken_i;
 			DD_jmp_o					<= D_jmp_i;
 			DD_op_jalr_o				<= D_op_jalr_i;
+			DD_csr_op_o					<= D_csr_op_i;
+			DD_need_CSR_o				<= D_need_CSR_i;
+			DD_csr_addr_o				<= D_csr_addr_i;
+			DD_csr_data_o				<= D_csr_data_i;
+			DD_csr_mret_o				<= D_csr_mret_i;
+			DD_csr_ecall_o				<= D_csr_ecall_i;
 		end
 		else if(~decode_ready_i & execute_allow_in_i) begin
 			decode_vaild_o	<=0;
@@ -153,6 +177,12 @@ module decode_reg(
 			DD_train_local_taken_o 		<= 0;
 			DD_jmp_o					<= 0;
 			DD_op_jalr_o				<= 0;
+			DD_csr_op_o					<= 0;
+			DD_need_CSR_o				<= 0;
+			DD_csr_addr_o				<= 0;
+			DD_csr_data_o				<= 0;
+			DD_csr_mret_o				<= 0;
+			DD_csr_ecall_o				<= 0;
 		end
 	end
 endmodule

@@ -13,8 +13,10 @@ module execute(
 	input wire [`XLEN - 1:0]         	DD_imme_i,
 	input wire [`ALU_WIDTH - 1:0]   	DD_ALU_op_i,
 	input wire [`PC_WIDTH - 1:0]    	DD_PC_i,
+	input wire [`CSR_WIDTH - 1:0]	  	DD_csr_op_i,
 	//output
 	//结果
+	output wire [`XLEN - 1:0]		E_csr_valE_o,
 	output wire [`XLEN - 1:0]		E_valE_o,
 	output wire 					E_ready_o
 );
@@ -30,6 +32,7 @@ module execute(
 	wire op_aluiw = DD_epcode_i[`op_aluiw];
 	wire op_lui = DD_epcode_i[`op_lui];
 	wire op_auipc = DD_epcode_i[`op_auipc];
+	wire op_system = DD_epcode_i[`op_system];
 	//ALU OP
 	wire alu_add = DD_ALU_op_i[`alu_add];
 	wire alu_sub = DD_ALU_op_i[`alu_sub];
@@ -56,6 +59,15 @@ module execute(
 	wire branch_ge = DD_branch_op_i[`branch_ge];
 	wire branch_ltu = DD_branch_op_i[`branch_ltu];
 	wire branch_geu = DD_branch_op_i[`branch_geu];
+	//CSR OP
+	wire csr_rw = DD_csr_op_i[`csr_rw];
+	wire csr_rs = DD_csr_op_i[`csr_rs];
+	wire csr_rc = DD_csr_op_i[`csr_rc];
+	wire csr_wi = DD_csr_op_i[`csr_wi];
+	wire csr_si = DD_csr_op_i[`csr_si];
+	wire csr_ci = DD_csr_op_i[`csr_ci];
+	wire csr_ecall = DD_csr_op_i[`ecall];
+	wire csr_mret = DD_csr_op_i[`mret];
 	//ALU计算
 	//操作数的选择
 	//OP1 : jal/jalr/auipc:DD_PC_i
@@ -65,10 +77,12 @@ module execute(
 	//		store/load/lui/auipc/alui/aluiw: DD_imme_i
 	//      DD_rs2_data_i
 	//ADD/SUB
-	wire [`XLEN - 1:0] OP1 =  	(op_jal | op_jalr | op_auipc) ? DD_PC_i :
+	wire [`XLEN - 1:0] OP1 =  	(op_jal | op_jalr | op_auipc | csr_ecall) ? DD_PC_i :
+								(csr_wi | csr_si | csr_ci) ? DD_imme_i :
 								(op_lui) ? 0 : DD_rs1_data_i;
 								
-	wire [`XLEN - 1:0] OP2 = 	(op_jal | op_jalr) ? 4 :
+	wire [`XLEN - 1:0] OP2 = 	(csr_ecall) ? 0 :
+								(op_jal | op_jalr) ? 4 :
 								(op_store | op_load | op_lui | op_alui | op_aluiw | op_auipc) ? DD_imme_i : DD_rs2_data_i;
 	//ALU sel
 	wire use_sub = alu_sub | alu_slt | alu_sltu | op_branch;
@@ -88,6 +102,12 @@ module execute(
 	wire sel_divu = alu_divu;
 	wire sel_rem = alu_rem;
 	wire sel_remu = alu_remu;
+	wire sel_csr = op_system;
+	//csr sel
+	wire sel_w = csr_rw | csr_wi;
+	wire sel_s = csr_rs | csr_si;
+	wire sel_c = csr_rc | csr_ci;
+	wire sel_ecall = csr_ecall;
 	//res
 	wire [`XLEN - 1:0] res_add_sub;
 	wire [`XLEN - 1:0] res_sll;
@@ -99,6 +119,7 @@ module execute(
 	wire [`XLEN - 1:0] res_or;
 	wire [`XLEN - 1:0] res_and;
 	wire [`XLEN - 1:0] res_OP1;
+	wire [`XLEN - 1:0] res_csr;
 	//sub and ADD
 	wire cin = use_sub;
 	wire cout;
@@ -107,7 +128,8 @@ module execute(
 	assign {cout, res_add_sub} = adder_OP1 + adder_OP2 + {{31{1'b0}},cin};
 	
 	//slt and sltu
-	wire lt, ltu;
+	wire lt = (OP1[`XLEN - 1] & ~OP2[`XLEN - 1]) | ((~(OP2[`XLEN - 1] ^ OP1[`XLEN - 1])) & res_add_sub[`XLEN - 1]);
+	wire ltu = ~cout;
 	assign res_slt = {31'b0, lt};
 	assign res_sltu = {31'b0, ltu};
 	//移位
@@ -124,6 +146,8 @@ module execute(
 	assign res_and = OP1 & OP2;
 	//or
 	assign res_or = OP1 | OP2;
+	//csr
+	assign res_csr = OP2;
 	//mul
 	wire [`XLEN:0] smul_OP1 = {OP1[`XLEN - 1], OP1};
 	wire [`XLEN:0] smul_OP2 = {OP2[`XLEN - 1], OP2};
@@ -133,19 +157,27 @@ module execute(
 
 	wire [`XLEN:0] mul_OP1 = alu_mul | alu_mulh | alu_mulhsu ? smul_OP1 : umul_OP1;
 	wire [`XLEN:0] mul_OP2 = alu_mul | alu_mulh ? smul_OP2 : umul_OP2;
-
+	wire need_mul = sel_mul | sel_mulh;
+	wire mul_state;
+	wire mul_cnt;
 	//wire [`XLEN * 2 + 1:0]res_mul = $signed(mul_OP1) * $signed(mul_OP2);
 	wire [`XLEN * 2 + 1:0] res_mul;
 	mul mul(
+		.rst(rst),
+		.clk_i(clk_i),
+		.need(need_mul),
 		.x(mul_OP1),
 		.y(mul_OP2),
 
-		.z(res_mul)
+		.z(res_mul),
+		.state_o(mul_state),
+		.cnt_o(mul_cnt)
 	);
-	wire need_div = sel_div | sel_divu | sel_rem | sel_remu;
+	wire E_mul_ready =  (mul_state == `idle & ~need_mul) | (mul_state == `busy & ~(|mul_cnt));
 	//div
-	wire state;
-	wire [5:0] cnt;
+	wire need_div = sel_div | sel_divu | sel_rem | sel_remu;
+	wire div_state;
+	wire [5:0] div_cnt;
 	wire sign_rem = OP1[`XLEN - 1];
 	wire sign_div = OP1[`XLEN - 1] ^ OP2[`XLEN - 1];
 	wire [`XLEN - 1:0]div_OP1 =  OP1[`XLEN - 1] ? (~OP1) + 1 : OP1;
@@ -161,11 +193,11 @@ module execute(
 
 		.Q(divu_num),
 		.D(remu_num),
-		.state_o(state),
-		.cnt_o(cnt)
+		.state_o(div_state),
+		.cnt_o(div_cnt)
 	);
-	//ready 全看除法
-	assign E_ready_o = (state == `idle & ~need_div) | (state == `busy & ~(|cnt));
+	//ready div
+	wire E_div_ready = (div_state == `idle & ~need_div) | (div_state == `busy & ~(|div_cnt));
 	wire [`XLEN - 1:0]div_num = sign_div ? (~divu_num) + 1 : divu_num;
 	wire [`XLEN - 1:0]rem_num = sign_rem ? (~remu_num) + 1 : remu_num;
 
@@ -187,15 +219,25 @@ module execute(
 									({`XLEN{sel_mulh}} & res_mul[`XLEN * 2 - 1:`XLEN] ) | 
 									({`XLEN{sel_div}} & res_div ) | 
 									({`XLEN{sel_divu}} & res_divu ) | 
-									({`XLEN{sel_rem}} & res_rem ) | 
+									({`XLEN{sel_rem}} & res_rem ) |  
+									({`XLEN{sel_csr}} & res_csr ) | 
 									({`XLEN{sel_remu}} & res_remu ) | 
 									({`XLEN{sel_or}} & res_or ) | 
 									({`XLEN{sel_and}} & res_and );
 
 	wire [`XLEN - 1:0]resw = {res[31:0]};
 	assign E_valE_o = (op_alurw | op_aluiw) ? resw : res;
-	assign lt = (OP1[`XLEN - 1] & ~OP2[`XLEN - 1]) | ((~(OP2[`XLEN - 1] ^ OP1[`XLEN - 1])) & res_add_sub[`XLEN - 1]);
-	assign ltu = ~cout;
+	//csr_data
+	wire [`XLEN - 1:0] w = OP1;
+	wire [`XLEN - 1:0] s = OP1 | OP2;
+	wire [`XLEN - 1:0] c = (~OP1 & OP2);
+	assign E_csr_valE_o = 
+									({`XLEN{csr_ecall}} & res_add_sub ) | 
+									({`XLEN{sel_w}} & w ) | 
+									({`XLEN{sel_s}} & s ) |
+									({`XLEN{sel_c}} & c );
+
+	assign E_ready_o = E_div_ready & E_mul_ready;
 endmodule
 
 

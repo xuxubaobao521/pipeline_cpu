@@ -28,7 +28,15 @@ module execute_reg(
 	input wire				decode_vaild_i,
 	input wire				execute_ready_i,
 	input wire				memory_allow_in_i,
-	
+	input wire 						DD_need_CSR_i,
+	input wire [`CSR_number_WIDTH - 1:0] DD_csr_addr_i,
+	input wire [`CSR_WIDTH - 1:0]	  	DD_csr_op_i,
+	input wire [`XLEN - 1:0]	E_csr_valE_i,
+	//output
+	output reg [`XLEN - 1:0]	ED_csr_valE_o,
+	output reg 						ED_need_CSR_o,
+	output reg [`CSR_number_WIDTH - 1:0] ED_csr_addr_o,
+	output reg [`CSR_WIDTH - 1:0]	  	ED_csr_op_o,
 	output reg				execute_vaild_o,
 	output reg				ED_jal_o,
 	output reg				ED_train_global_taken_o,
@@ -81,6 +89,10 @@ module execute_reg(
 			ED_train_local_taken_o 	<= 0;
 			ED_success_hit_o		<= 0;
 			ED_jal_o				<= 0;
+			ED_csr_op_o					<= 0;
+			ED_need_CSR_o				<= 0;
+			ED_csr_addr_o				<= 0;
+			ED_csr_valE_o				<= 0;
 		end
 		else if(execute_ready_i & memory_allow_in_i)begin
 			execute_vaild_o	<= decode_vaild_i;
@@ -108,6 +120,10 @@ module execute_reg(
 			ED_train_local_taken_o 		<= DD_train_local_taken_i;
 			ED_success_hit_o			<= DD_success_hit_i;
 			ED_jal_o					<= DD_jal_i;
+			ED_csr_op_o					<= DD_csr_op_i;
+			ED_need_CSR_o				<= DD_need_CSR_i;
+			ED_csr_addr_o				<= DD_csr_addr_i;
+			ED_csr_valE_o				<= E_csr_valE_i;
 		end
 		else if(~execute_ready_i & memory_allow_in_i) begin
 			execute_vaild_o	<= 0;
@@ -135,6 +151,10 @@ module execute_reg(
 			ED_train_local_taken_o 	<= 0;
 			ED_success_hit_o		<= 0;
 			ED_jal_o				<= 0;
+			ED_csr_op_o				<= 0;
+			ED_need_CSR_o			<= 0;
+			ED_csr_addr_o			<= 0;
+			ED_csr_valE_o			<= 0;
 		end
 	end
 endmodule

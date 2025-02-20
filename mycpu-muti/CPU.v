@@ -101,8 +101,14 @@ module CPU(
 	wire [`LOAD_WIDTH - 1:0]		D_load_op;
 	wire [`XLEN - 1:0]         		D_imme;
 	wire [`ALU_WIDTH - 1:0]    		D_ALU_op;
-	wire [`XLEN - 1:0] 			D_rs1_data;
-	wire [`XLEN - 1:0] 			D_rs2_data;
+	wire 							D_need_CSR;
+	wire [`CSR_number_WIDTH - 1:0] 	D_csr_addr;
+	wire [`CSR_WIDTH - 1:0]	  		D_csr_op;
+	wire [`XLEN - 1:0] 				D_rs1_data;
+	wire [`XLEN - 1:0] 				D_rs2_data;
+	wire [`XLEN - 1:0] 				D_csr_data;
+	wire							D_csr_ecall;
+	wire							D_csr_mret;
 	
 	wire [`XLEN - 1:0]				D_jmp;
 	wire 							D_train_taken;
@@ -110,12 +116,14 @@ module CPU(
 	wire							D_train_global_taken;
 	wire [`PC_WIDTH - 1:0]  		D_nPC;
 	wire 							D_op_jalr;
-
+	wire [`CSR_number_WIDTH - 1:0] 	D_csr_read_addr;
 	wire [`XLEN - 1:0] 			D_fwdA;
 	wire [`XLEN - 1:0] 			D_fwdB;
 	//********************************
 	//decode reg
 	//********************************
+	wire							DD_csr_ecall;
+	wire							DD_csr_mret;
 	wire [`OP_WIDTH - 1:0]     		DD_epcode;
 	wire [`STORE_WIDTH - 1:0]  		DD_store_op;
 	wire [`LOAD_WIDTH - 1:0]   		DD_load_op;
@@ -143,10 +151,15 @@ module CPU(
 	wire					DD_train_local_taken;
 	wire					DD_train_global_taken;
 	wire					DD_train_taken;
+	wire 					DD_need_CSR;
+	wire [`CSR_number_WIDTH - 1:0] DD_csr_addr;
+	wire [`CSR_WIDTH - 1:0]	  DD_csr_op;
+	wire [`XLEN - 1:0] 				DD_csr_data;
 	//********************************
 	//execute
 	//********************************
 	wire [`XLEN - 1:0]			E_valE;
+	wire [`XLEN - 1:0]			E_csr_valE;
 	wire 						E_ready;
 	//********************************
 	//execute reg
@@ -174,6 +187,10 @@ module CPU(
 	wire					ED_train_global_predict;
 	wire					ED_success_hit;
 	wire					ED_jal;
+	wire 					ED_need_CSR;
+	wire [`CSR_number_WIDTH - 1:0] ED_csr_addr;
+	wire [`CSR_WIDTH - 1:0]	  	ED_csr_op;
+	wire [`XLEN - 1:0]			ED_csr_valE;
 	//********************************
 	//memory
 	//********************************
@@ -200,11 +217,14 @@ module CPU(
 	wire					MD_train_global_predict;
 	wire					MD_success_hit;
 	wire					MD_jal;
+	wire 					MD_need_CSR;
+	wire [`CSR_number_WIDTH - 1:0] MD_csr_addr;
+	wire [`CSR_WIDTH - 1:0]	  MD_csr_op;
+	wire [`XLEN - 1:0]			MD_csr_valE;
 	//********************************
 	//write_back
 	//********************************
 	wire [`XLEN - 1:0]       		W_data;
-	
 	//********************************
 	//fetch
 	//********************************
@@ -229,10 +249,12 @@ module CPU(
 	);
 	PC_sel PC_sel(
 		//in
-		.ED_op_jalr_i			(DD_op_jalr		),
-		.ED_train_vaild_i		(DD_train_vaild		),
-		.ED_train_taken_i		(DD_train_taken		),
-		.ED_jmp_i			(DD_jmp			),
+		.DD_csr_ecall_i			(DD_csr_ecall	),
+		.DD_csr_mret_i			(DD_csr_mret	),
+		.DD_op_jalr_i			(DD_op_jalr		),
+		.DD_train_vaild_i		(DD_train_vaild	),
+		.DD_train_taken_i		(DD_train_taken	),
+		.DD_jmp_i				(DD_jmp			),
 		//out
 		.F_PC_i				(F_PC			),
 		.F_sel_PC_o			(F_sel_PC		)
@@ -255,10 +277,10 @@ module CPU(
 		.rst				(rst			),
 		.clk_i				(clk			),
 		.MD_PC_i			(MD_PC[`history_WIDTH - 1:0]),
-    		.MD_train_global_history_i	(MD_train_global_history),
-    		.MD_train_valid_i		(MD_train_vaild		),
-    		.MD_train_predict_i		(MD_train_predict	),
-    		.MD_train_taken_i		(MD_train_taken		),
+    	.MD_train_global_history_i	(MD_train_global_history),
+    	.MD_train_valid_i		(MD_train_vaild		),
+    	.MD_train_predict_i		(MD_train_predict	),
+    	.MD_train_taken_i		(MD_train_taken		),
 		.MD_train_global_taken_i	(MD_train_global_taken	),
 		.MD_train_global_predict_i	(MD_train_global_predict),
 		.MD_train_local_predict_i	(MD_train_local_predict	),
@@ -297,7 +319,9 @@ module CPU(
 	//********************************
 	wire D_branch = D_epcode[`op_branch];
 	wire D_jalr = D_epcode[`op_jalr];
-	wire fetch_control = ((D_branch & (~D_train_taken)) | D_jalr) ? decode_allow_in ? 1'b0 : PC_vaild : PC_vaild;
+	wire D_ecall = D_csr_op[`ecall];
+	wire D_mret = D_csr_op[`mret];
+	wire fetch_control = ((D_branch & (~D_train_taken)) | D_jalr | D_ecall | D_mret) ? decode_allow_in ? 1'b0 : PC_vaild : PC_vaild;
 	assign fetch_allow_in = fetch_ready & decode_allow_in;
 	assign fetch_ready = 1'b1;
 	//********************************
@@ -356,6 +380,12 @@ module CPU(
 		.D_ALU_op_o			(D_ALU_op		),
 		.D_need_dstE_o			(D_need_dstE		),
 		.D_sel_reg_o			(D_sel_reg		),
+		.D_csr_addr_o			(D_csr_addr		),
+		.D_csr_op_o				(D_csr_op		),
+		.D_need_CSR_o			(D_need_CSR		),
+		.D_csr_read_addr_o		(D_csr_read_addr),
+		.D_csr_ecall_o			(D_csr_ecall	),
+		.D_csr_mret_o			(D_csr_mret		),
 		//data
 		.D_rs1_o			(D_rs1			),
 		.D_rs2_o			(D_rs2			),
@@ -376,40 +406,62 @@ module CPU(
 		//out
 		.D_rs1_data_o			(D_rs1_data		),
 		.D_rs2_data_o			(D_rs2_data		)
-
+	);
+	CSR CSR(
+		.rst				(rst			),
+		.clk_i				(clk			),
+		.D_csr_op_i			(D_csr_op		),
+		.MD_need_CSR_i		(MD_need_CSR	),
+		.MD_csr_addr_i		(MD_csr_addr	),
+		.MD_csr_valE_i		(MD_csr_valE	),
+		.D_csr_read_addr_i	(D_csr_read_addr),
+		//output
+		.D_csr_data_o		(D_csr_data		)
 	);
 	fwd fwd(
-		.D_rs1_i			(D_rs1			),
-		.D_rs2_i			(D_rs2			),
-		
+		.D_rs1_i				(D_rs1			),
+		.D_rs2_i				(D_rs2			),
+		.D_csr_read_addr_i		(D_csr_read_addr),
+		.D_need_CSR_i			(D_need_CSR		),
+		.D_csr_data_i			(D_csr_data		),
 		.D_rs1_data_i			(D_rs1_data		),
 		.D_rs2_data_i			(D_rs2_data		),
-			
-		.DD_need_dstE_i			(DD_need_dstE		),
-		.DD_dstE_i			(DD_dstE		),
-		.E_valE_i			(E_valE			),
+		
+		.DD_need_CSR_i			(DD_need_CSR	),
+		.DD_csr_addr_i			(DD_csr_addr	),
+		.DD_need_dstE_i			(DD_need_dstE	),
+		.DD_dstE_i				(DD_dstE		),
+		.E_valE_i				(E_valE			),
+		.E_csr_valE_i			(E_csr_valE		),
 
-		.ED_need_dstE_i			(ED_need_dstE		),
-		.ED_dstE_i			(ED_dstE		),
+		.ED_need_CSR_i			(ED_need_CSR	),
+		.ED_csr_addr_i			(ED_csr_addr	),
+		.ED_csr_valE_i			(ED_csr_valE	),
+		.ED_need_dstE_i			(ED_need_dstE	),
+		.ED_dstE_i				(ED_dstE		),
 		.ED_sel_reg_i			(ED_sel_reg		),
-		.ED_valE_i			(ED_valE		),
-		.M_valM_i			(M_valM			),
+		.ED_valE_i				(ED_valE		),
+		.M_valM_i				(M_valM			),
 	
-		.MD_need_dstE_i			(MD_need_dstE		),
-		.MD_dstE_i			(MD_dstE		),
-		.W_data_i			(W_data			),
+		.MD_need_CSR_i			(MD_need_CSR	),
+		.MD_csr_addr_i			(MD_csr_addr	),
+		.MD_csr_valE_i			(MD_csr_valE	),
+		.MD_need_dstE_i			(MD_need_dstE	),
+		.MD_dstE_i				(MD_dstE		),
+		.W_data_i				(W_data			),
 
 		.D_fwdA_o(D_fwdA),
 		.D_fwdB_o(D_fwdB)
 	);
 	branch_unit branch_unit(
-		.D_fwdA_i					(D_fwdA		),
-		.D_fwdB_i					(D_fwdB		),
-		.FD_epcode_i				(D_epcode		),
+		.D_fwdA_i					(D_fwdA				),
+		.D_fwdB_i					(D_fwdB				),
+		.D_csr_op_i					(D_csr_op			),
+		.FD_epcode_i				(D_epcode			),
 		.FD_branch_op_i				(D_branch_op		),
-		.FD_imme_i					(D_imme		),
-		.FD_PC_i					(FD_PC			),
-		.FD_nPC_i					(FD_nPC			),
+		.FD_imme_i					(D_imme				),
+		.FD_PC_i					(FD_PC				),
+		.FD_nPC_i					(FD_nPC				),
 		.FD_train_predict_i			(FD_train_predict	),
     	.FD_train_local_predict_i	(FD_train_local_predict	),
     	.FD_train_global_predict_i	(FD_train_global_predict),
@@ -440,18 +492,20 @@ module CPU(
 		.D_load_op_i			(D_load_op		),
 		.D_branch_op_i			(D_branch_op		),
 		.D_ALU_op_i			(D_ALU_op		),
-		.D_sel_reg_i			(D_sel_reg		),
-		.D_PC_i				(FD_PC			),
-		.D_nPC_i			(D_nPC			),
-		.D_commit_i			(FD_commit		),
-		.D_need_dstE_i			(D_need_dstE		),
-		.D_dstE_i			(D_dstE			),
-		.D_rs1_data_i			(D_fwdA			),
-		.D_rs2_data_i			(D_fwdB			),
-		.D_imme_i			(D_imme			),
-		.D_instr_i			(FD_instr		),
-		.D_train_predict_i		(FD_train_predict	),
-		.D_train_vaild_i		(FD_train_vaild		),
+		.D_csr_ecall_i				(D_csr_ecall			),
+		.D_csr_mret_i				(D_csr_mret				),
+		.D_sel_reg_i				(D_sel_reg				),
+		.D_PC_i						(FD_PC					),
+		.D_nPC_i					(D_nPC					),
+		.D_commit_i					(FD_commit				),
+		.D_need_dstE_i				(D_need_dstE			),
+		.D_dstE_i					(D_dstE					),
+		.D_rs1_data_i				(D_fwdA					),
+		.D_rs2_data_i				(D_fwdB					),
+		.D_imme_i					(D_imme					),
+		.D_instr_i					(FD_instr				),
+		.D_train_predict_i			(FD_train_predict		),
+		.D_train_vaild_i			(FD_train_vaild			),
 		.D_train_global_history_i	(FD_train_global_history),
     	.D_train_local_predict_i	(FD_train_local_predict	),
     	.D_train_global_predict_i	(FD_train_global_predict),
@@ -465,7 +519,17 @@ module CPU(
 		.decode_control_i			(decode_control			),
 		.decode_ready_i				(decode_ready			),
 		.execute_allow_in_i			(execute_allow_in		),
+		.D_csr_addr_i				(D_csr_addr				),
+		.D_csr_op_i					(D_csr_op				),
+		.D_need_CSR_i				(D_need_CSR				),
+		.D_csr_data_i				(D_csr_data				),
 		//output
+		.DD_csr_ecall_o				(DD_csr_ecall			),
+		.DD_csr_mret_o				(DD_csr_mret			),
+		.DD_csr_data_o				(DD_csr_data			),
+		.DD_csr_addr_o				(DD_csr_addr			),
+		.DD_csr_op_o				(DD_csr_op				),
+		.DD_need_CSR_o				(DD_need_CSR			),
 		.decode_vaild_o				(decode_vaild			),
 		.DD_jmp_o					(DD_jmp					),
 		.DD_op_jalr_o				(DD_op_jalr				),
@@ -507,15 +571,17 @@ module CPU(
 		.rst					(rst				),
 		.clk_i					(clk				),
 		.DD_rs1_data_i			(DD_rs1_data		),
+		.DD_csr_op_i			(DD_csr_op			),
 		.DD_rs2_data_i			(DD_rs2_data		),
-		.DD_epcode_i			(DD_epcode		),
+		.DD_epcode_i			(DD_epcode			),
 		.DD_branch_op_i			(DD_branch_op		),
-		.DD_imme_i			(DD_imme		),
-		.DD_ALU_op_i			(DD_ALU_op		),
-		.DD_PC_i			(DD_PC			),
+		.DD_imme_i				(DD_imme			),
+		.DD_ALU_op_i			(DD_ALU_op			),
+		.DD_PC_i				(DD_PC				),
 		//out
-		.E_valE_o			(E_valE			),
-		.E_ready_o			(E_ready		)
+		.E_valE_o				(E_valE				),
+		.E_ready_o				(E_ready			),
+		.E_csr_valE_o			(E_csr_valE			)
 	);
 	//********************************
 	//control
@@ -552,11 +618,18 @@ module CPU(
     	.DD_train_global_taken_i		(DD_train_global_taken	),
 		.DD_success_hit_i			(DD_success_hit			),
 		.DD_jal_i					(DD_jal					),
-
 		.decode_vaild_i				(decode_vaild			),
 		.execute_ready_i			(execute_ready			),
 		.memory_allow_in_i			(memory_allow_in		),
+		.DD_csr_addr_i				(DD_csr_addr			),
+		.DD_csr_op_i				(DD_csr_op				),
+		.DD_need_CSR_i				(DD_need_CSR			),
+		.E_csr_valE_i				(E_csr_valE				),
 		//output
+		.ED_csr_valE_o				(ED_csr_valE			),
+		.ED_csr_addr_o				(ED_csr_addr			),
+		.ED_csr_op_o				(ED_csr_op				),
+		.ED_need_CSR_o				(ED_need_CSR			),
 		.execute_vaild_o			(execute_vaild			),
 		.ED_jal_o					(ED_jal					),
 		.ED_success_hit_o			(ED_success_hit			),
@@ -631,7 +704,15 @@ module CPU(
 		.execute_vaild_i			(execute_vaild			),
 		.memory_ready_i				(memory_ready			),
 		.write_back_allow_in_i		(write_back_allow_in	),
+		.ED_csr_addr_i				(ED_csr_addr			),
+		.ED_csr_op_i				(ED_csr_op				),
+		.ED_need_CSR_i				(ED_need_CSR			),
+		.ED_csr_valE_i				(ED_csr_valE			),
 		//output
+		.MD_csr_valE_o				(MD_csr_valE			),
+		.MD_csr_addr_o				(MD_csr_addr			),
+		.MD_csr_op_o				(MD_csr_op				),
+		.MD_need_CSR_o				(MD_need_CSR			),
 		.memory_vaild_o				(memory_vaild			),
 		.MD_jal_o					(MD_jal					),
 		.MD_success_hit_o			(MD_success_hit			),

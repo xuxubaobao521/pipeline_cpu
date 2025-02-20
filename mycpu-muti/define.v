@@ -15,8 +15,9 @@
 `define aluiw 7'b0011011
 `define lui 7'b0110111
 `define auipc 7'b0010111
+`define system 7'b1110011
 
-`define OP_WIDTH 11
+`define OP_WIDTH 12
 `define op_branch 0
 `define op_jal 1
 `define op_jalr 2
@@ -28,6 +29,7 @@
 `define op_aluiw 8
 `define op_lui 9
 `define op_auipc 10
+`define op_system 11
 
 //ALU操作 
 `define ALU_add 3'b000
@@ -127,3 +129,25 @@
 `define BIA_WIDTH 12
 `define BTA_WIDTH 32
 `define BTB_index_WIDTH 8
+
+
+//csr
+`define CSR_NUMBER 4096
+`define rw 3'b001
+`define rs 3'b010
+`define rc 3'b011
+`define wi 3'b101
+`define si 3'b110
+`define ci 3'b111
+
+`define CSR_WIDTH 8
+`define csr_rw 0
+`define csr_rs 1
+`define csr_rc 2
+`define csr_wi 3
+`define csr_si 4
+`define csr_ci 5
+`define ecall 6
+`define mret 7
+
+`define CSR_number_WIDTH 12

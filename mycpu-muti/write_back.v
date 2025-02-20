@@ -10,10 +10,10 @@ module write_back(
 );
 	import "DPI-C" function void dpi_ebreak		(input int pc);
 	always @(*) begin
-	if(MD_instr_i == 32'h00100073) begin
-		dpi_ebreak(0);
+		if(MD_instr_i == 32'h00100073) begin
+			dpi_ebreak(0);
+		end
 	end
-end
 	assign W_data_o = (MD_sel_reg_i) ? MD_valE_i : MD_valM_i;
 endmodule
 

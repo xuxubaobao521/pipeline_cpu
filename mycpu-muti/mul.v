@@ -1,14 +1,22 @@
 `include "define.v"
+`define idle 0
+`define busy 1 
 module mul(
+    input wire rst,
+    input wire clk_i,
+    input wire need,
     input wire[`XLEN:0] x,
     input wire[`XLEN:0] y,
 
-    output wire[`XLEN * 2 + 1:0] z
+    output wire[`XLEN * 2 + 1:0] z,
+    output reg state_o,
+    output reg cnt_o
 );
     wire [`XLEN * 2 + 1:0] X = {{33{x[`XLEN]}},x};
     wire [`XLEN * 2 + 1:0] add_x = X;
     wire [`XLEN * 2 + 1:0] sub_x = ~X + {65'b0,1'b1};
-    wire [`XLEN * 2 + 1:0] tmp_1[16:0];
+    wire [`XLEN * 2 + 1:0] tmp[16:0];
+    reg [`XLEN * 2 + 1:0]tmp_1[16:0];
     wire [`XLEN * 2 + 1:0] S_1[4:0];
     wire [`XLEN * 2 + 1:0] C_1[4:0];
 
@@ -36,7 +44,7 @@ module mul(
                 .add_x(add_x << (i * 2)),
                 .sub_x(sub_x << (i * 2)),
 
-                .value(tmp_1[i]));
+                .value(tmp[i]));
         end
     endgenerate
     //第一层 16 -> 11
@@ -61,6 +69,22 @@ module mul(
     //第六层3->2
     full_add full_add_14(S_4[1], C_5,  S_5, C_6, S_6);
 	assign z = C_6 + S_6;
+    always @(posedge clk_i) begin
+        if(rst) begin
+            state_o <= `idle;
+        end
+        else if(need) begin
+            if(state_o == `idle) begin
+                state_o <= `busy;
+                cnt_o   <= 1;
+            end
+            else if(|cnt_o) begin
+                cnt_o   <= cnt_o - 1;
+                tmp_1   <= tmp;
+            end
+            else state_o <= `idle;
+        end
+    end
 endmodule
 
 module booth(
