@@ -13,9 +13,9 @@ module PC_instr(
 );
 	wire[`OP_WIDTH - 1:0] mini_epcode;
 	wire[`XLEN - 1:0] mini_imme;
-	import "DPI-C" function int  dpi_mem_read 	(input int addr  , input int len);
+	import "DPI-C" function int  instr_dpi_mem_read 	(input int addr  , input int len);
 	//取指令
-	assign instr_o = dpi_mem_read(F_PC_i, 4);
+	assign instr_o = instr_dpi_mem_read(F_PC_i, 4);
 	//mini-decode
 	id mini_decode(
 		//input

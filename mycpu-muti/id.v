@@ -234,7 +234,7 @@ module id(
 	assign D_csr_ecall_o = rv32_ecall;
 	assign D_csr_mret_o	 = rv32_mret;
 	//需要写入CSR寄存器的操作
-	assign D_need_CSR_o = (rw) | (rs) | (rc) | (wi) | (si) | (ci) | rv32_ecall;
+	assign D_need_CSR_o = |D_csr_op_o;
 	//不需要 rd操作有
 	//store branch
 	//并且设置写入寄存器的编号

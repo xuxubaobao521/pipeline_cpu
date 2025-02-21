@@ -4,6 +4,7 @@ module CSR(
 	input wire 								clk_i,
 	input wire [`CSR_WIDTH - 1:0]			D_csr_op_i,
 	input wire [`CSR_number_WIDTH - 1:0]	D_csr_read_addr_i,
+	input wire [`CSR_WIDTH - 1:0]			MD_csr_op_i,
 	input wire 								MD_need_CSR_i,
 	input wire [`CSR_number_WIDTH - 1:0]	MD_csr_addr_i,
 	input wire [`XLEN - 1:0]				MD_csr_valE_i,
@@ -15,12 +16,10 @@ module CSR(
 	reg [31:0] mtvec;
 	reg [31:0] mcause;
 	reg [31:0] mepc;
-	wire [31:0] debug_mstatus = mstatus;
-	wire [31:0] debug_mtvec = mtvec;
-	wire [31:0] debug_mcause = mcause;
-	wire [31:0] debug_mepc = mepc;
 	wire D_ecall = D_csr_op_i[`ecall];
 	wire D_mret = D_csr_op_i[`mret];
+	wire W_ecall = MD_csr_op_i[`ecall];
+	wire W_mret = MD_csr_op_i[`mret];
 	//写回阶段
 	wire W_mstatus = (MD_csr_addr_i == 12'h300);
 	wire W_mtvec   = (MD_csr_addr_i == 12'h305);
@@ -28,8 +27,8 @@ module CSR(
 	wire W_mcause  = (MD_csr_addr_i == 12'h342);
 	//译码阶段
 	wire D_mstatus = (D_csr_read_addr_i == 12'h300);
-	wire D_mtvec   = (D_csr_read_addr_i == 12'h305) | D_mret;
-	wire D_mepc    = (D_csr_read_addr_i == 12'h341) | D_ecall;
+	wire D_mtvec   = (D_csr_read_addr_i == 12'h305);
+	wire D_mepc    = (D_csr_read_addr_i == 12'h341);
 	wire D_mcause  = (D_csr_read_addr_i == 12'h342);
 
 	always @(posedge clk_i) begin
@@ -37,7 +36,13 @@ module CSR(
 			mtvec   <= 32'd0;
 			mstatus <= 32'h1800;
 			mepc    <= 32'd0;
-			mcause  <= 32'hb; 
+			mcause  <= 32'hb;
+		end
+		else if(W_ecall) begin
+			mepc	<= MD_csr_valE_i;
+		end
+		else if(W_mret) begin
+
 		end
 		else if(MD_need_CSR_i)begin
 			if(W_mstatus) mstatus <= MD_csr_valE_i;

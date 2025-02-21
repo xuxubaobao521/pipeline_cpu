@@ -1,6 +1,7 @@
 module branch_unit(
 	input wire [`XLEN - 1:0] 			D_fwdA_i,
 	input wire [`XLEN - 1:0] 			D_fwdB_i,
+	input wire [`XLEN - 1:0]			D_csr_data_i,
 	input wire [`CSR_WIDTH - 1:0]	  	D_csr_op_i,
 
 	input wire [`OP_WIDTH - 1:0]    	FD_epcode_i,
@@ -66,7 +67,7 @@ module branch_unit(
 				(branch_geu & geu)) ^ FD_train_global_predict_i);
 	wire [`PC_WIDTH - 1 : 0] PC_op1 = (op_jalr) ? D_fwdA_i : FD_PC_i;
 	wire [`PC_WIDTH - 1 : 0] PC_op2 = (op_jalr | (op_branch & ~FD_train_predict_i)) ? FD_imme_i : 4;
-	assign D_jmp_o = csr_ecall | csr_mret ? D_fwdB_i : PC_op1 + PC_op2;
+	assign D_jmp_o = csr_ecall | csr_mret ? D_csr_data_i : PC_op1 + PC_op2;
 	assign D_op_jalr_o = op_jalr;
 	assign D_nPC_o = (op_branch & ~D_train_taken_o) | op_jalr | csr_ecall | csr_mret ? D_jmp_o : FD_nPC_i;
 endmodule

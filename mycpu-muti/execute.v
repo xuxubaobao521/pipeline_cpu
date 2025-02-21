@@ -14,6 +14,7 @@ module execute(
 	input wire [`ALU_WIDTH - 1:0]   	DD_ALU_op_i,
 	input wire [`PC_WIDTH - 1:0]    	DD_PC_i,
 	input wire [`CSR_WIDTH - 1:0]	  	DD_csr_op_i,
+	input wire [`XLEN - 1:0]			DD_csr_data_i,
 	//output
 	//结果
 	output wire [`XLEN - 1:0]		E_csr_valE_o,
@@ -83,6 +84,7 @@ module execute(
 								
 	wire [`XLEN - 1:0] OP2 = 	(csr_ecall) ? 0 :
 								(op_jal | op_jalr) ? 4 :
+								(op_system) ? DD_csr_data_i : 
 								(op_store | op_load | op_lui | op_alui | op_aluiw | op_auipc) ? DD_imme_i : DD_rs2_data_i;
 	//ALU sel
 	wire use_sub = alu_sub | alu_slt | alu_sltu | op_branch;
@@ -236,7 +238,6 @@ module execute(
 									({`XLEN{sel_w}} & w ) | 
 									({`XLEN{sel_s}} & s ) |
 									({`XLEN{sel_c}} & c );
-
 	assign E_ready_o = E_div_ready & E_mul_ready;
 endmodule
 
