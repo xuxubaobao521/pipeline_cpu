@@ -70,6 +70,7 @@ module CPU(
 	wire 					F_train_local_predict;
 	wire					F_train_global_predict;
 	wire					F_success_hit;
+	wire					instr_data_ok;
 	//********************************
 	//fetch_reg
 	//********************************
@@ -249,6 +250,9 @@ module CPU(
 	);
 	PC_sel PC_sel(
 		//in
+		.instr_data_ok_i		(instr_data_ok	),
+		.br_cancel_i			(br_cancel		),
+		.br_PC_i				(br_PC			),
 		.MD_need_CSR_i			(MD_need_CSR	),
 		.MD_nPC_i				(MD_nPC			),
 		.DD_op_jalr_i			(DD_op_jalr		),
@@ -256,31 +260,34 @@ module CPU(
 		.DD_train_taken_i		(DD_train_taken	),
 		.DD_jmp_i				(DD_jmp			),
 		//out
-		.F_PC_i				(F_PC			),
-		.F_sel_PC_o			(F_sel_PC		)
+		.F_PC_i					(F_PC			),
+		.F_sel_PC_o				(F_sel_PC		)
 	);
 	assign cur_pc = F_sel_PC;
 	PC_instr PC_instr(
 		//in
-		.F_PC_i				(F_sel_PC		),
+		.rst					(rst				),
+		.clk_i					(clk				),
+		.F_PC_i					(F_sel_PC			),
 		//out
-		.instr_o			(instr			),
+		.instr_o				(instr				),
 		.mini_jal_jmp_o			(mini_jal_jmp		),
 		.mini_branch_jmp_o		(mini_branch_jmp	),
-		.F_commit_o			(F_commit		),
+		.F_commit_o				(F_commit			),
 		.F_train_vaild_o		(F_train_vaild		),
 		.mini_op_branch_o		(mini_op_branch		),
-		.mini_op_jal_o			(mini_op_jal		)
+		.mini_op_jal_o			(mini_op_jal		),
+		.instr_data_ok_o		(instr_data_ok		)
 	);
 	CBP CBP(
 		//in
-		.rst				(rst			),
-		.clk_i				(clk			),
-		.MD_PC_i			(MD_PC[`history_WIDTH - 1:0]),
+		.rst						(rst					),
+		.clk_i						(clk					),
+		.MD_PC_i					(MD_PC[`history_WIDTH - 1:0]),
     	.MD_train_global_history_i	(MD_train_global_history),
-    	.MD_train_valid_i		(MD_train_vaild		),
-    	.MD_train_predict_i		(MD_train_predict	),
-    	.MD_train_taken_i		(MD_train_taken		),
+    	.MD_train_valid_i			(MD_train_vaild			),
+    	.MD_train_predict_i			(MD_train_predict		),
+    	.MD_train_taken_i			(MD_train_taken			),
 		.MD_train_global_taken_i	(MD_train_global_taken	),
 		.MD_train_global_predict_i	(MD_train_global_predict),
 		.MD_train_local_predict_i	(MD_train_local_predict	),
@@ -321,22 +328,50 @@ module CPU(
 	wire D_jalr = D_epcode[`op_jalr];
 	wire D_ecall = D_csr_op[`ecall];
 	wire D_mret = D_csr_op[`mret];
-	wire fetch_control = ((D_branch & (~D_train_taken)) | D_jalr | D_need_CSR | DD_need_CSR | ED_need_CSR) ? decode_allow_in ? 1'b0 : PC_vaild : PC_vaild;
+	//如果不是ready的话，证明没有清除掉我想要的指令
+	wire cancel_PC = ((D_branch & (~D_train_taken)) | D_jalr | D_need_CSR | DD_need_CSR | ED_need_CSR) ? decode_allow_in ? 1'b0 : PC_vaild : PC_vaild;
+	//需要暂存一下清除信号
+	reg [1:0] br_cancel;
+	reg [`PC_WIDTH - 1:0] br_PC;
+	always@(posedge clk) begin
+		if(rst) begin
+			br_cancel <= `normal;
+		end
+		else if(fetch_allow_in) begin
+			if(br_cancel == `cancel) begin
+				br_cancel <= `save;
+			end
+			else if(br_cancel == `save) begin
+				br_cancel <= `normal;
+			end
+		end
+		else if(~fetch_ready & ~cancel_PC)begin
+			br_cancel <= `cancel;
+			if(ED_need_CSR) begin
+				br_PC <= ED_nPC;
+			end
+			else if((D_branch & (~D_train_taken)) | D_jalr) begin
+				br_PC <= D_jmp;
+			end
+		end
+	end
+	//fetch_control 代表当前指令是否有效
+	wire fetch_control = cancel_PC & (br_cancel != `cancel);
 	assign fetch_allow_in = fetch_ready & decode_allow_in;
-	assign fetch_ready = 1'b1;
+	assign fetch_ready = instr_data_ok;
 	//********************************
 	//control
 	//********************************
 	fetch_reg fetch_reg(
 		//input
-		.rst				(rst			),
-		.clk_i				(clk			),
-		.instr_i			(instr			),
-		.F_PC_i				(F_sel_PC		),
-		.F_nPC_i			(nPC			),
-		.F_commit_i			(F_commit		),
-		.F_train_predict_i		(F_train_predict	),
-		.F_train_vaild_i		(F_train_vaild		),
+		.rst						(rst					),
+		.clk_i						(clk					),
+		.instr_i					(instr					),
+		.F_PC_i						(F_sel_PC				),
+		.F_nPC_i					(nPC					),
+		.F_commit_i					(F_commit				),
+		.F_train_predict_i			(F_train_predict		),
+		.F_train_vaild_i			(F_train_vaild			),
 		.F_train_global_history_i	(F_train_global_history	),
     	.F_train_local_predict_i	(F_train_local_predict	),
     	.F_train_global_predict_i	(F_train_global_predict	),
@@ -422,7 +457,6 @@ module CPU(
 	fwd fwd(
 		.D_rs1_i				(D_rs1				),
 		.D_rs2_i				(D_rs2				),
-		
 		.D_rs1_data_i			(D_rs1_data			),
 		.D_rs2_data_i			(D_rs2_data			),
 			
@@ -470,7 +504,7 @@ module CPU(
 	wire DD_op_load = DD_epcode[`op_load];
 	wire decode_control = fetch_vaild;
 	assign decode_ready = ~((DD_op_load) & (D_rs1 == DD_dstE | D_rs2 == DD_dstE) & DD_need_dstE & decode_vaild) | (~fetch_vaild);
-	assign decode_allow_in = (execute_allow_in & decode_ready) | (~decode_vaild);
+	assign decode_allow_in = (execute_allow_in & decode_ready);
 	//********************************
 	//control
 	//********************************

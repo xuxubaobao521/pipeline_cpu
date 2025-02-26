@@ -76,7 +76,7 @@ module decode_reg(
 	output reg				DD_success_hit_o
 );
 	always @(posedge clk_i) begin
-		if(rst | ~decode_control_i) begin
+		if(rst | (~decode_control_i & execute_allow_in_i)) begin
 			decode_vaild_o	<=0;
 			DD_epcode_o 	<=0;
 			DD_store_op_o	<=0;

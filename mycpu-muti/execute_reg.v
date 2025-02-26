@@ -63,7 +63,7 @@ module execute_reg(
 	output reg [4:0]                 	ED_dstE_o
 );
 	always @(posedge clk_i) begin
-		if(rst | ~decode_vaild_i) begin
+		if(rst | (~decode_vaild_i & memory_allow_in_i)) begin
 			execute_vaild_o	<= 0;
 			ED_store_op_o 	<= 0;
 			ED_load_op_o 	<= 0;

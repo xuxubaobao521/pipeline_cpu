@@ -32,7 +32,7 @@ module fetch_reg(
 	output reg				FD_commit_o
 );
 	always @(posedge clk_i) begin
-		if(rst | ~fetch_control_i) begin
+		if(rst | (~fetch_control_i & decode_allow_in_i)) begin
 			FD_instr_o			<=`nop_instr;
 			FD_PC_o				<=`nop_PC;
 			FD_nPC_o			<=`nop_nPC;

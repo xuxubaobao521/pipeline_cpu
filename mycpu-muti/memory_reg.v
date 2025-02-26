@@ -56,7 +56,7 @@ module memory_reg(
 	output reg 			MD_commit_o
 );
 	always @(posedge clk_i) begin
-		if(rst | ~execute_vaild_i)begin
+		if(rst | (~execute_vaild_i & write_back_allow_in_i))begin
 			memory_vaild_o		<= 0;
 			MD_sel_reg_o 		<= 0;
 			MD_valM_o		<= 0;

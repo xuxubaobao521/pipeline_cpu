@@ -1,21 +1,32 @@
 `include "define.v"
 module PC_instr(
 	//input
-	input wire [`PC_WIDTH - 1 : 0] 		F_PC_i,
+	input wire								rst,
+	input wire 								clk_i,
+	input wire [`PC_WIDTH - 1 : 0] 			F_PC_i,
 	//output
-	output wire				mini_op_branch_o,
-	output wire 				mini_op_jal_o,
-	output wire [`XLEN - 1:0]		mini_jal_jmp_o,
-	output wire [`XLEN - 1:0]		mini_branch_jmp_o,
-	output wire 				F_train_vaild_o,
-	output wire				F_commit_o,
-	output wire [`INSTR_WIDTH - 1 : 0] 	instr_o
+	output wire								mini_op_branch_o,
+	output wire 							mini_op_jal_o,
+	output wire [`XLEN - 1:0]				mini_jal_jmp_o,
+	output wire [`XLEN - 1:0]				mini_branch_jmp_o,
+	output wire 							F_train_vaild_o,
+	output wire								F_commit_o,
+	output wire [`INSTR_WIDTH - 1 : 0] 		instr_o,
+	output wire 							instr_data_ok_o
 );
 	wire[`OP_WIDTH - 1:0] mini_epcode;
 	wire[`XLEN - 1:0] mini_imme;
-	import "DPI-C" function int  instr_dpi_mem_read 	(input int addr  , input int len);
-	//取指令
-	assign instr_o = instr_dpi_mem_read(F_PC_i, 4);
+	//import "DPI-C" function int  instr_dpi_mem_read 	(input int addr  , input int len);
+	//icache取指令
+	//assign instr_o = instr_dpi_mem_read(F_PC_i, 4);
+	icache icache(
+		.rst(rst),
+		.clk_i(clk_i),
+		.instr_addr_i(F_PC_i),
+		
+		.instr_data_ok_o(instr_data_ok_o),
+		.instr_data_o(instr_o)
+	);
 	//mini-decode
 	id mini_decode(
 		//input

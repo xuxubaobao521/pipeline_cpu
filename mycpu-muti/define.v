@@ -151,3 +151,19 @@
 `define mret 7
 
 `define CSR_number_WIDTH 12
+
+//cache
+`define cache_offset 4
+`define cache_index 9
+`define cache_tag 19
+`define cache_data 128
+`define cache_line 512
+
+// 2^9 = 512个cahce行
+//cacahe 每行2^{4}B  共2^(9)行 cache容量为8KB 直接映射
+//地址划分
+//tag(31-13)共19位       index(12-4)共九位   offset(3-0) 共四位
+
+`define cancel 0
+`define normal 1
+`define save 2
