@@ -108,10 +108,10 @@ module execute_reg(
 			ED_nPC_o						<= DD_nPC_i;
 			ED_commit_o						<= DD_commit_i;
 			ED_instr_o						<= DD_instr_i;
-			ED_op_jalr_o					<=DD_op_jalr_i;
+			ED_op_jalr_o					<= DD_op_jalr_i;
 			
-			ED_train_vaild_o				<=DD_train_vaild_i;
-			ED_train_predict_o				<=DD_train_predict_i;
+			ED_train_vaild_o				<= DD_train_vaild_i;
+			ED_train_predict_o				<= DD_train_predict_i;
 			ED_train_global_history_o		<= DD_train_global_history_i;
 			ED_train_global_predict_o		<= DD_train_global_predict_i;
 			ED_train_local_predict_o		<= DD_train_local_predict_i;
