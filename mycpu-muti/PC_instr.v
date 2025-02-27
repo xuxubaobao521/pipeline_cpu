@@ -30,28 +30,28 @@ module PC_instr(
 	//mini-decode
 	id mini_decode(
 		//input
-		.FD_instr_i(instr_o),
+		.FD_instr_i			(instr_o		),
 		//output
 		//OP
-		.D_epcode_o(mini_epcode),
-		.D_branch_op_o(),
-		.D_store_op_o(),
-		.D_load_op_o(),
-		.D_ALU_op_o(),
-		.D_need_dstE_o(),
-		.D_sel_reg_o(),
-		.D_csr_read_addr_o(),
-		.D_csr_op_o(),
-		.D_csr_addr_o(),
-		.D_need_CSR_o(),
-		.D_csr_ecall_o(),
-		.D_csr_mret_o(),
+		.D_epcode_o			(mini_epcode	),
+		.D_branch_op_o		(				),
+		.D_store_op_o		(				),
+		.D_load_op_o		(				),
+		.D_ALU_op_o			(				),
+		.D_need_dstE_o		(				),
+		.D_sel_reg_o		(				),
+		.D_csr_read_addr_o	(				),
+		.D_csr_op_o			(				),
+		.D_csr_addr_o		(				),
+		.D_need_CSR_o		(				),
+		.D_csr_ecall_o		(				),
+		.D_csr_mret_o		(				),
 		//data
-		.D_rs1_o(),
-		.D_rs2_o(),
-		.D_imme_o(mini_imme),
+		.D_rs1_o			(				),
+		.D_rs2_o			(				),
+		.D_imme_o			(mini_imme		),
 		//addr
-		.D_dstE_o()
+		.D_dstE_o			(				)
 	);
 	
 	assign mini_op_branch_o = mini_epcode[`op_branch];

@@ -5,67 +5,67 @@
 `define NN 2'b00
 
 module CBP(
-    input wire 		clk_i,
-    input wire 		rst,
-
-    input wire 				ED_train_valid_i,
+    input wire 							clk_i,
+    input wire 							rst,
+	//ED input
+    input wire 							ED_train_valid_i,
     input wire	[`history_WIDTH - 1:0]	ED_train_global_history_i,
-    input wire				ED_train_global_predict_i,
-    input wire				ED_train_global_taken_i,
+    input wire							ED_train_global_predict_i,
+    input wire							ED_train_global_taken_i,
     
-
+	//MD input
     input wire [`history_WIDTH - 1:0] 	MD_PC_i,
     input wire [`history_WIDTH - 1:0]	MD_train_global_history_i,
-    input wire 				MD_train_valid_i,
-    input wire				MD_train_predict_i,
-    input wire				MD_train_taken_i,
-    input wire				MD_train_global_taken_i,
-    input wire				MD_train_global_predict_i,
-	input wire				MD_train_local_predict_i,
-	input wire				MD_train_local_taken_i,
+    input wire 							MD_train_valid_i,
+    input wire							MD_train_predict_i,
+    input wire							MD_train_taken_i,
+    input wire							MD_train_global_taken_i,
+    input wire							MD_train_global_predict_i,
+	input wire							MD_train_local_predict_i,
+	input wire							MD_train_local_taken_i,
     
     
-    
+    //output
     input wire	[`history_WIDTH - 1:0]	F_PC_i,
-    input wire				mini_op_branch_i,
-    output wire				F_train_predict_o,
+    input wire							mini_op_branch_i,
+    output wire							F_train_predict_o,
     output wire [`history_WIDTH - 1:0] 	F_train_global_history_o,
-    output wire 			F_train_local_predict_o,
-    output wire				F_train_global_predict_o
+    output wire 						F_train_local_predict_o,
+    output wire							F_train_global_predict_o
 );
 	reg [1:0] state, next_state;
 	global_CBP global_CBP(
 		//in
-		.rst				(rst			),
-		.clk_i				(clk_i			),
-		.MD_PC_i			(MD_PC_i		),
-    		.MD_train_valid_i		(MD_train_valid_i	),
-    		.MD_train_history_i		(MD_train_global_history_i),
-    		.MD_train_predict_i		(MD_train_global_predict_i),
-    		.MD_train_taken_i		(MD_train_global_taken_i),
-		
-		
-   		.ED_train_valid_i		(ED_train_valid_i	),
-		.ED_train_history_i		(ED_train_global_history_i),
-    		.ED_train_predict_i		(ED_train_global_predict_i),
-    		.ED_train_taken_i		(ED_train_global_taken_i),
+		.rst					(rst						),
+		.clk_i					(clk_i						),
+		//MD input
+		.MD_PC_i				(MD_PC_i					),
+    	.MD_train_valid_i		(MD_train_valid_i			),
+    	.MD_train_history_i		(MD_train_global_history_i	),
+    	.MD_train_predict_i		(MD_train_global_predict_i	),
+    	.MD_train_taken_i		(MD_train_global_taken_i	),
+		//ED input
+   		.ED_train_valid_i		(ED_train_valid_i			),
+		.ED_train_history_i		(ED_train_global_history_i	),
+    	.ED_train_predict_i		(ED_train_global_predict_i	),
+    	.ED_train_taken_i		(ED_train_global_taken_i	),
     		
-    		.F_PC_i				(F_PC_i			),
-    		.mini_op_branch_i		(mini_op_branch_i	),
-		//out
-		.F_train_predict_o		(F_train_global_predict_o),
-    		.F_train_history_o		(F_train_global_history_o)
+    	.F_PC_i					(F_PC_i						),
+    	.mini_op_branch_i		(mini_op_branch_i			),
+		//output
+		.F_train_predict_o		(F_train_global_predict_o	),
+    	.F_train_history_o		(F_train_global_history_o	)
 	);
 	local_CBP local_CBP(
     	.clk_i					(clk_i						),
     	.rst					(rst						),
     
-
+		//MD input
     	.MD_PC_i				(MD_PC_i					),
     	.MD_train_valid_i		(MD_train_valid_i			),
     	.MD_train_predict_i		(MD_train_local_predict_i	),
     	.MD_train_taken_i		(MD_train_local_taken_i		),
-    
+		//output
     	.F_PC_i					(F_PC_i						),
     	.F_train_predict_o		(F_train_local_predict_o	)
 	);
@@ -85,30 +85,30 @@ module CBP(
 endmodule
 
 module global_CBP(
-    input wire 		clk_i,
-    input wire 		rst,
+    input wire 							clk_i,
+    input wire 							rst,
 
     input wire	[`history_WIDTH - 1:0]	ED_train_history_i,
-    input wire 				ED_train_valid_i,
-    input wire				ED_train_predict_i,
-    input wire				ED_train_taken_i,
+    input wire 							ED_train_valid_i,
+    input wire							ED_train_predict_i,
+    input wire							ED_train_taken_i,
     
 
     input wire [`history_WIDTH - 1:0] 	MD_PC_i,
     input wire [`history_WIDTH - 1:0]	MD_train_history_i,
-    input wire 				MD_train_valid_i,
-    input wire				MD_train_predict_i,
-    input wire				MD_train_taken_i,
+    input wire 							MD_train_valid_i,
+    input wire							MD_train_predict_i,
+    input wire							MD_train_taken_i,
     
     input wire	[`history_WIDTH - 1:0]	F_PC_i,
-    input wire				mini_op_branch_i,
-    output wire				F_train_predict_o,
+    input wire							mini_op_branch_i,
+    output wire							F_train_predict_o,
     output reg [`history_WIDTH - 1:0] 	F_train_history_o
 );
 	reg [`history_WIDTH - 1:0] predict_history;
 	reg [1:0] PHT [`PHT_WIDTH - 1:0];
-    	wire [`history_WIDTH - 1:0] F_sum = F_train_history_o^F_PC_i;
-    	wire [`history_WIDTH - 1:0] MD_sum = MD_PC_i^MD_train_history_i;
+    wire [`history_WIDTH - 1:0] F_sum = F_train_history_o^F_PC_i;
+    wire [`history_WIDTH - 1:0] MD_sum = MD_PC_i^MD_train_history_i;
 	always @(posedge clk_i) begin
         if(rst) begin
             predict_history <= 7'b0;
@@ -141,17 +141,17 @@ module global_CBP(
 endmodule
 
 module local_CBP(
-    input wire 		clk_i,
-    input wire 		rst,
+    input wire 							clk_i,
+    input wire 							rst,
     
 
     input wire [`history_WIDTH - 1:0] 	MD_PC_i,
-    input wire 				MD_train_valid_i,
-    input wire				MD_train_predict_i,
-    input wire				MD_train_taken_i,
+    input wire 							MD_train_valid_i,
+    input wire							MD_train_predict_i,
+    input wire							MD_train_taken_i,
     
     input wire	[`history_WIDTH - 1:0]	F_PC_i,
-    output wire				F_train_predict_o
+    output wire							F_train_predict_o
 );
 	reg [1:0] PHT [`PHT_WIDTH - 1:0];
 	reg [`history_WIDTH - 1:0] BHT[`PHT_WIDTH - 1:0];

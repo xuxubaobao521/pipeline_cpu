@@ -4,10 +4,10 @@
 
 module execute(
 	//input
-	input wire 						rst,
-	input wire						clk_i,
-	input wire [`XLEN - 1:0] 		DD_rs1_data_i,
-	input wire [`XLEN - 1:0] 		DD_rs2_data_i,
+	input wire 							rst,
+	input wire							clk_i,
+	input wire [`XLEN - 1:0] 			DD_rs1_data_i,
+	input wire [`XLEN - 1:0] 			DD_rs2_data_i,
 	input wire [`OP_WIDTH - 1:0]    	DD_epcode_i,
 	input wire [`BRANCH_WIDTH - 1:0]	DD_branch_op_i,
 	input wire [`XLEN - 1:0]         	DD_imme_i,
@@ -17,9 +17,9 @@ module execute(
 	input wire [`XLEN - 1:0]			DD_csr_data_i,
 	//output
 	//结果
-	output wire [`XLEN - 1:0]		E_csr_valE_o,
-	output wire [`XLEN - 1:0]		E_valE_o,
-	output wire 					E_ready_o
+	output wire [`XLEN - 1:0]			E_csr_valE_o,
+	output wire [`XLEN - 1:0]			E_valE_o,
+	output wire 						E_ready_o
 );
 	//opcode OP
 	wire op_branch = DD_epcode_i[`op_branch];

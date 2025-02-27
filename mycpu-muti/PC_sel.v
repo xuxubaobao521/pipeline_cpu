@@ -14,8 +14,7 @@ module PC_sel(
 	output wire[`PC_WIDTH - 1:0]		F_sel_PC_o
 );
 	
-	assign F_sel_PC_o = 
-						(br_cancel_i == `save) ? br_PC_i :
+	assign F_sel_PC_o = (br_cancel_i == `save) ? br_PC_i :
 						MD_need_CSR_i & instr_data_ok_i ? MD_nPC_i : 
 						((DD_train_vaild_i & (~DD_train_taken_i)) | DD_op_jalr_i) & instr_data_ok_i  ? DD_jmp_i : F_PC_i;
 endmodule

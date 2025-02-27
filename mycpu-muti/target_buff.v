@@ -4,16 +4,16 @@ module target_buff(
     input wire                      clk_i,
     input wire                      jmp_vaild,
     input wire [2:0]                index,
-    input wire [`PC_WIDTH - 1:0]   tag,
+    input wire [`PC_WIDTH - 1:0]   	tag,
     //如果未命中更新PC
     input wire [`PC_WIDTH - 1:0]    nex_PC,
 
-    output wire                      hit,
-    output wire [`BTA_WIDTH - 1:0]   addr
+    output wire                     hit,
+    output wire [`BTA_WIDTH - 1:0]  addr
 );
     //BTB 直接映射
-    reg                     vaild   [`BTB_index_WIDTH - 1:0];
-    reg [`BTA_WIDTH - 1:0]  BTA     [`BTB_index_WIDTH - 1:0];
+    reg                    vaild   [`BTB_index_WIDTH - 1:0];
+    reg [`BTA_WIDTH - 1:0] BTA     [`BTB_index_WIDTH - 1:0];
     reg [`PC_WIDTH - 1:0]  BIA     [`BTB_index_WIDTH - 1:0];
     //查看是否命中
     assign hit = jmp_vaild & vaild[index] & BIA[index] == tag;

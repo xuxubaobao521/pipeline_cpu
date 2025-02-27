@@ -9,7 +9,7 @@ module CSR(
 	input wire [`CSR_number_WIDTH - 1:0]	MD_csr_addr_i,
 	input wire [`XLEN - 1:0]				MD_csr_valE_i,
 	//output
-	output wire [`XLEN - 1:0]       D_csr_data_o
+	output wire [`XLEN - 1:0]       		D_csr_data_o
 );
 	//只需要支持ecall指令、mret指令、CSR指令
 	reg [31:0] mstatus;

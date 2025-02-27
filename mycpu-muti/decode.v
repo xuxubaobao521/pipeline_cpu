@@ -1,10 +1,10 @@
 `include "define.v"
 module decode(
 	//input
-	input wire			rst,
+	input wire					rst,
 	input wire                	clk_i,
-	input wire [4:0]		D_rs1_i,
-	input wire [4:0]		D_rs2_i,
+	input wire [4:0]			D_rs1_i,
+	input wire [4:0]			D_rs2_i,
 	input wire                	MD_need_dstE_i,
 	input wire					memory_vaild_i,
 	input wire [4:0]          	MD_dstE_i,

@@ -2,21 +2,21 @@
 `define idle 0
 `define busy 1 
 module mul(
-    input wire rst,
-    input wire clk_i,
-    input wire need,
-    input wire[`XLEN:0] x,
-    input wire[`XLEN:0] y,
+    input wire 						rst,
+    input wire 						clk_i,
+    input wire 						need,
+    input wire[`XLEN:0] 			x,
+    input wire[`XLEN:0] 			y,
 
-    output wire[`XLEN * 2 + 1:0] z,
-    output reg state_o,
-    output reg cnt_o
+    output wire[`XLEN * 2 + 1:0] 	z,
+    output reg 						state_o,
+    output reg 						cnt_o
 );
     wire [`XLEN * 2 + 1:0] X = {{33{x[`XLEN]}},x};
     wire [`XLEN * 2 + 1:0] add_x = X;
     wire [`XLEN * 2 + 1:0] sub_x = ~X + {65'b0,1'b1};
     wire [`XLEN * 2 + 1:0] tmp[16:0];
-    reg [`XLEN * 2 + 1:0]tmp_1[16:0];
+    reg  [`XLEN * 2 + 1:0] tmp_1[16:0];
     wire [`XLEN * 2 + 1:0] S_1[4:0];
     wire [`XLEN * 2 + 1:0] C_1[4:0];
 
@@ -88,9 +88,9 @@ module mul(
 endmodule
 
 module booth(
-    input wire y_u,
-    input wire y_i,
-    input wire y_d,
+    input wire 				y_u,
+    input wire 				y_i,
+    input wire 				y_d,
     input [`XLEN * 2 + 1:0] add_x,
     input [`XLEN * 2 + 1:0] sub_x,
 

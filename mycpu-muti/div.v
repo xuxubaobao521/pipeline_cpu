@@ -2,29 +2,29 @@
 `define die 0
 `define busy 1
 module div(
-	input wire rst,
-	input wire clk_i,
-	input wire need,
-	input wire [`XLEN - 1:0] Dividend_i,
-	input wire [`XLEN - 1:0] Divisor_i,
+	input wire 					rst,
+	input wire 					clk_i,
+	input wire 					need,
+	input wire [`XLEN - 1:0] 	Dividend_i,
+	input wire [`XLEN - 1:0] 	Divisor_i,
 	
-	output wire [`XLEN - 1:0] Q,
-	output wire [`XLEN - 1:0] D,
-    output wire state_o,
-    output wire [5:0] cnt_o
+	output wire [`XLEN - 1:0] 	Q,
+	output wire [`XLEN - 1:0] 	D,
+    output wire 				state_o,
+    output wire [5:0] 			cnt_o
 );
-	reg state;
-	reg [5:0] cnt;
+	reg 					state;
+	reg [5:0] 				cnt;
 	reg [`XLEN * 2 - 1:0] 	Divisor;
 	reg [`XLEN * 2 - 1:0] 	Dividend;
 	reg [`XLEN - 1:0] 		Quotent;
 	wire [`XLEN * 2 - 1:0] 	sum;
 	wire select;
 	control control(
-		.Divisor(Divisor),
-		.Dividend(Dividend),
-		.sum(sum),
-		.select(select)
+		.Divisor		(Divisor	),
+		.Dividend		(Dividend	),
+		.sum			(sum		),
+		.select			(select		)
 	);
 	always @(posedge clk_i) begin
 		if(rst)
@@ -57,11 +57,11 @@ module div(
 endmodule
 
 module control(
-	input wire [`XLEN * 2 - 1:0] Divisor,
-	input wire [`XLEN * 2 - 1:0] Dividend,
+	input wire [`XLEN * 2 - 1:0]	Divisor,
+	input wire [`XLEN * 2 - 1:0] 	Dividend,
 	
-	output wire [`XLEN * 2 - 1:0] sum,
-	output wire select
+	output wire [`XLEN * 2 - 1:0]	sum,
+	output wire s					elect
 );
 	wire [`XLEN * 2 - 1:0] OP1 = Dividend;
 	wire [`XLEN * 2 - 1:0] OP2 = {64{1'b1}} ^ Divisor;
